@@ -86,16 +86,26 @@ namespace sage.big
         private int ReadReverseInt32(BinaryReader br)
         {
             byte[] array = br.ReadBytes(4);
-            return BitConverter.ToInt32(array, 0);
+            return BitConverter.ToInt32(array.Reverse().ToArray(), 0);
+        }
+
+        private string ReadNullterminatedString(BinaryReader br)
+        {
+            string result = "";
+            char c;
+            while ((c = br.ReadChar()) != '\0')
+                result += c;
+
+            return result;
         }
 
         private void Read()
         {
             //start parsing the big
             char[] magic = m_reader.ReadChars(4);
-            if (magic.Equals(new char[] { 'B', 'I', 'G', '4' }))
+            if (magic.SequenceEqual(new char[] { 'B', 'I', 'G', '4' }))
                 m_version = BigArchiveVersion.BIG4;
-            else if (magic.Equals(new char[] { 'B', 'I', 'G', 'F' }))
+            else if (magic.SequenceEqual(new char[] { 'B', 'I', 'G', 'F' }))
                 m_version = BigArchiveVersion.BIGF;
             else
                 throw new InvalidDataException("Not a known BIG format!");
@@ -107,9 +117,23 @@ namespace sage.big
             foreach (var i in Enumerable.Range(0, m_numEntries))
             {
                 // do something
-                BigArchiveEntry entry;
+                int offset = ReadReverseInt32(m_reader);
+                int size = ReadReverseInt32(m_reader);
+                string name = ReadNullterminatedString(m_reader);
+                AddEntry(new BigArchiveEntry(this, name, offset, size));
             }
 
+        }
+
+        private void AddEntry(BigArchiveEntry entry)
+        {
+            m_entries.Add(entry);
+
+            string entryName = entry.FullName;
+            if (!m_entriesDictionary.ContainsKey(entryName))
+            {
+                m_entriesDictionary.Add(entryName, entry);
+            }
         }
 
         public BigArchiveEntry CreateEntry()
@@ -132,6 +156,19 @@ namespace sage.big
             {
                 return m_entriesCollection;
             }
+        }
+
+        public BigArchiveEntry GetEntry(string entryName)
+        {
+            if (entryName == null)
+                throw new ArgumentNullException(nameof(entryName));
+
+            if (m_mode == BigArchiveMode.Create)
+                throw new NotSupportedException("Can't get entry in create mode!");
+
+            BigArchiveEntry result;
+            m_entriesDictionary.TryGetValue(entryName, out result);
+            return result;
         }
 
         public BigArchiveMode Mode
