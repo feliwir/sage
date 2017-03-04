@@ -23,6 +23,11 @@ namespace sage
                 foreach(var e in arch.Entries)
                 {
                     Console.WriteLine(e.FullName);
+                    if(e.Length<1000)
+                    {
+                        StreamReader sr = new StreamReader(e.Open());
+                        string data = sr.ReadToEnd();
+                    }
                 }
             }
         }

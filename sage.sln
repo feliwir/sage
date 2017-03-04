@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26206.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sage", "sage\sage.csproj", "{986508B8-81E8-447C-A79B-2F2AAD9FE69D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sage", "sage\sage.csproj", "{986508B8-81E8-447C-A79B-2F2AAD9FE69D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "big", "big\big.csproj", "{F0A7E9B2-3D5E-40EE-8CE1-DEF68567DC7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "big", "big\big.csproj", "{F0A7E9B2-3D5E-40EE-8CE1-DEF68567DC7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{1E61BD56-CDC6-4CBF-9BEB-7700EA67A7B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{1E61BD56-CDC6-4CBF-9BEB-7700EA67A7B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bfme", "bfme\bfme.csproj", "{2EFEFCDB-C200-419B-9730-8ABAC2EEFC94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bfme", "bfme\bfme.csproj", "{2EFEFCDB-C200-419B-9730-8ABAC2EEFC94}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

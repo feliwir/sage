@@ -5,6 +5,9 @@ using System.Text;
 
 namespace sage.big
 {
+    /// <summary>
+    /// This class represents a single entry inside an archive
+    /// </summary>
     public class BigArchiveEntry
     {
         private BigArchive m_archive;
@@ -12,10 +15,9 @@ namespace sage.big
         private long m_compressedSize;
         private long m_uncompressedSize;
         private string m_name;
-        private BigStream m_stream;
         private long m_offset;
 
-        public BigArchiveEntry(BigArchive archive,string name,long offset,long size)
+        public BigArchiveEntry(BigArchive archive, string name, long offset, long size)
         {
             m_archive = archive;
             m_name = name;
@@ -25,6 +27,9 @@ namespace sage.big
 
         public BigArchive Archive => m_archive;
 
+        /// <summary>
+        /// The complete name (with directories) of an entry
+        /// </summary>
         public string FullName
         {
             get
@@ -40,19 +45,66 @@ namespace sage.big
                 return m_uncompressedSize;
             }
         }
+
+        public Stream Open()
+        {
+            switch (m_archive.Mode)
+            {
+                case BigArchiveMode.Read:
+                    return OpenInReadMode();
+                case BigArchiveMode.Create:
+                    return OpenInWriteMode();
+                case BigArchiveMode.Update:
+                default:
+                    return OpenInUpdateMode();
+            }
+        }
+
+        public Stream OpenInUpdateMode()
+        {
+            return new BigStream(this, true, m_offset);
+        }
+
+        public Stream OpenInReadMode()
+        {
+            return new BigStream(this, false, m_offset);
+        }
+
+        public Stream OpenInWriteMode()
+        {
+            return new BigStream(this, true, m_offset);
+        }
     }
 
     public class BigStream : Stream
     {
-        public override bool CanRead => throw new NotImplementedException();
+        private BigArchive m_archive;
+        private BigArchiveEntry m_entry;
+        private bool m_writable;
+        private long m_offset;
+        private long m_pos = 0;
 
-        public override bool CanSeek => throw new NotImplementedException();
+        public BigStream(BigArchiveEntry entry, bool writable, long offset)
+        {
+            m_entry = entry;
+            m_archive = entry.Archive;
+            m_writable = writable;
+            m_offset = offset;
+        }
 
-        public override bool CanWrite => throw new NotImplementedException();
+        public override bool CanRead => true;
 
-        public override long Length => throw new NotImplementedException();
+        public override bool CanSeek => true;
 
-        public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override bool CanWrite => m_writable;
+
+        public override long Length => m_entry.Length;
+
+        public override long Position
+        {
+            get { return m_pos; }
+            set { m_pos = value; }
+        }
 
         public override void Flush()
         {
@@ -61,7 +113,10 @@ namespace sage.big
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            m_archive.ArchiveStream.Seek(m_offset + m_pos, SeekOrigin.Begin);
+            int result = m_archive.ArchiveStream.Read(buffer, offset, count);
+            m_pos += result;
+            return result;
         }
 
         public override long Seek(long offset, SeekOrigin origin)

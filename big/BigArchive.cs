@@ -6,12 +6,18 @@ using System.Linq;
 
 namespace sage.big
 {
+    /// <summary>
+    /// Tells which version this archive is in
+    /// </summary>
     public enum BigArchiveVersion
     {
         BIG4,
         BIGF
     }
 
+    /// <summary>
+    /// This class represents an big archive, which is the actual .big file on disk
+    /// </summary>
     public class BigArchive : IDisposable
     {
         private Stream m_stream;
@@ -26,14 +32,32 @@ namespace sage.big
         private int m_first;
         private int m_numEntries;
         
+        /// <summary>
+        /// Opens a big archive. This does load all enries inside the archive, which
+        /// are available in Entries
+        /// </summary>
+        /// <param name="stream">the stream where to load the archive from</param>
         public BigArchive(Stream stream) : this(stream, BigArchiveMode.Read, leaveOpen: false)
-        {      
+        {
         }
 
+        /// <summary>
+        /// Opens a big archive. This does load all enries inside the archive, which
+        /// are available in Entries
+        /// </summary>
+        /// <param name="stream">the stream where to load the archive from</param>
+        /// <param name="mode">wether to open this archive for read/update/create </param>
         public BigArchive(Stream stream, BigArchiveMode mode) : this(stream, mode, leaveOpen: false)
         {
         }
 
+        /// <summary>
+        /// Opens a big archive. This does load all enries inside the archive, which
+        /// are available in Entries
+        /// </summary>
+        /// <param name="stream">the stream where to load the archive from</param>
+        /// <param name="mode">wether to open this archive for read/update/create </param>
+        /// <param name="leaveOpen">should the stream be closed</param>
         public BigArchive(Stream stream, BigArchiveMode mode, bool leaveOpen)
         {
             if (stream == null)
@@ -42,6 +66,12 @@ namespace sage.big
             Init(stream, mode, leaveOpen);
         }
 
+        /// <summary>
+        /// Initialize the repository
+        /// </summary>
+        /// <param name="stream">the stream where to load the archive from</param>
+        /// <param name="mode">wether to open this archive for read/update/create </param>
+        /// <param name="leaveOpen">should the stream be closed</param>
         private void Init(Stream stream, BigArchiveMode mode, bool leaveOpen)
         {
             switch (mode)
@@ -83,12 +113,22 @@ namespace sage.big
             }
         }
 
+        /// <summary>
+        /// Read bytes in reverse order into an integer
+        /// </summary>
+        /// <param name="br">the binaryreader where to read the bytes from</param>
+        /// <returns>the reversed integer</returns>
         private int ReadReverseInt32(BinaryReader br)
         {
             byte[] array = br.ReadBytes(4);
             return BitConverter.ToInt32(array.Reverse().ToArray(), 0);
         }
 
+        /// <summary>
+        /// Read characters until a null ('\0') character appears and append them to a string
+        /// </summary>
+        /// <param name="br"></param>
+        /// <returns>the nullterminated string</returns>
         private string ReadNullterminatedString(BinaryReader br)
         {
             string result = "";
@@ -99,6 +139,9 @@ namespace sage.big
             return result;
         }
 
+        /// <summary>
+        /// Read the header of a big archive
+        /// </summary>
         private void Read()
         {
             //start parsing the big
@@ -125,6 +168,10 @@ namespace sage.big
 
         }
 
+        /// <summary>
+        /// Add a new entry to our dictionary and our list
+        /// </summary>
+        /// <param name="entry"></param>
         private void AddEntry(BigArchiveEntry entry)
         {
             m_entries.Add(entry);
@@ -136,18 +183,28 @@ namespace sage.big
             }
         }
 
+        /// <summary>
+        /// Create a new  Entry
+        /// </summary>
+        /// <returns></returns>
         public BigArchiveEntry CreateEntry()
         {
             return null;
         }
 
-        public void Dispose()
+        protected virtual void Dispose(bool disposing)
         {
             if (!m_leaveOpen)
             {
                 m_stream.Dispose();
                 m_reader?.Dispose();
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public ReadOnlyCollection<BigArchiveEntry> Entries
@@ -170,6 +227,8 @@ namespace sage.big
             m_entriesDictionary.TryGetValue(entryName, out result);
             return result;
         }
+
+        internal Stream ArchiveStream => m_stream;
 
         public BigArchiveMode Mode
         {
