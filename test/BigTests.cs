@@ -8,6 +8,20 @@ namespace test
     public class BigTests
     {
         [Fact]
+        public void Seeking()
+        {
+            BigArchive archive = new BigArchive(File.Open("test.big", FileMode.Open));
+            foreach (var e in archive.Entries)
+            {
+                Stream s = e.Open();
+                Assert.Equal(s.Position, 0);
+                s.Seek(0, SeekOrigin.End);
+                Assert.Equal(s.Position, s.Length);
+            }
+            archive.Dispose();
+        }
+
+        [Fact]
         public void Open()
         {
             BigArchive archive = new BigArchive(File.Open("test.big",FileMode.Open));
