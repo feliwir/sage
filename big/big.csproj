@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
     <PackageId>Sage.Big</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.1</PackageVersion>
     <Authors>Stephan Vedder</Authors>
     <Description>Library for loading .big archives</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

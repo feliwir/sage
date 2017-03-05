@@ -114,6 +114,9 @@ namespace sage.big
         public override int Read(byte[] buffer, int offset, int count)
         {
             m_archive.ArchiveStream.Seek(m_offset + m_pos, SeekOrigin.Begin);
+            if (count > (Length - Position))
+                count = (int)(Length - Position);
+
             int result = m_archive.ArchiveStream.Read(buffer, offset, count);
             m_pos += result;
             return result;
