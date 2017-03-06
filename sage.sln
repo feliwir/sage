@@ -14,7 +14,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bfme", "bfme\bfme.csproj", "{2EFEFCDB-C200-419B-9730-8ABAC2EEFC94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vp6", "vp6\vp6.csproj", "{C4EDDCCE-036B-4D30-87A5-118E46CDF29A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vp6", "vp6\vp6.csproj", "{C4EDDCCE-036B-4D30-87A5-118E46CDF29A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "refpack", "refpack\refpack.csproj", "{84988F57-C759-487F-BBC0-FF8F70CA746B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,6 +88,18 @@ Global
 		{C4EDDCCE-036B-4D30-87A5-118E46CDF29A}.Release|x64.Build.0 = Release|x64
 		{C4EDDCCE-036B-4D30-87A5-118E46CDF29A}.Release|x86.ActiveCfg = Release|x86
 		{C4EDDCCE-036B-4D30-87A5-118E46CDF29A}.Release|x86.Build.0 = Release|x86
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|x64.ActiveCfg = Debug|x64
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|x64.Build.0 = Debug|x64
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|x86.ActiveCfg = Debug|x86
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Debug|x86.Build.0 = Debug|x86
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|x64.ActiveCfg = Release|x64
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|x64.Build.0 = Release|x64
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|x86.ActiveCfg = Release|x86
+		{84988F57-C759-487F-BBC0-FF8F70CA746B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
