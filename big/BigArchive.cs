@@ -121,7 +121,7 @@ namespace sage.big
         /// </summary>
         /// <param name="br">the binaryreader where to read the bytes from</param>
         /// <returns>the reversed integer</returns>
-        private int ReadReverseInt32(BinaryReader br)
+        private static int ReadReverseInt32(BinaryReader br)
         {
             byte[] array = br.ReadBytes(4);
             return BitConverter.ToInt32(array.Reverse().ToArray(), 0);

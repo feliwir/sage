@@ -21,15 +21,6 @@ namespace sage
             foreach (string file in Directory.GetFiles(m_rootDir, "*.big", SearchOption.AllDirectories))
             {
                 BigArchive arch = new BigArchive(File.Open(file, FileMode.Open));
-                foreach (var e in arch.Entries)
-                {
-                    Console.WriteLine(e.FullName);
-                    if (e.Length < 1000)
-                    {
-                        StreamReader sr = new StreamReader(e.Open());
-                        string data = sr.ReadToEnd();
-                    }
-                }
             }
 
             //Play all vp6 videos
