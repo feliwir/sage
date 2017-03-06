@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
+    <RootNamespace>sage.vp6</RootNamespace>
   </PropertyGroup>
 
 </Project>

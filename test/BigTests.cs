@@ -10,7 +10,7 @@ namespace test
         [Fact]
         public void Seeking()
         {
-            BigArchive archive = new BigArchive(File.Open("test.big", FileMode.Open));
+            BigArchive archive = new BigArchive(File.Open("test.big", FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var e in archive.Entries)
             {
                 Stream s = e.Open();
@@ -24,7 +24,7 @@ namespace test
         [Fact]
         public void Open()
         {
-            BigArchive archive = new BigArchive(File.Open("test.big",FileMode.Open));
+            BigArchive archive = new BigArchive(File.Open("test.big",FileMode.Open,FileAccess.Read,FileShare.Read));
             Assert.Equal(archive.Entries.Count, 2);
             foreach(var e in archive.Entries)
             {
@@ -37,7 +37,7 @@ namespace test
         [Fact]
         public void Create()
         {
-            BigArchive archive = new BigArchive(File.Open("test.big",FileMode.Create),BigArchiveMode.Create);
+            BigArchive archive = new BigArchive(File.Open("test.big", FileMode.Open, FileAccess.Read, FileShare.Read));
             archive.Dispose();
         }
     }

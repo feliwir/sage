@@ -74,6 +74,8 @@ namespace sage.big
         /// <param name="leaveOpen">should the stream be closed</param>
         private void Init(Stream stream, BigArchiveMode mode, bool leaveOpen)
         {
+
+  
             switch (mode)
             {
                 case BigArchiveMode.Create:
@@ -94,6 +96,7 @@ namespace sage.big
 
             m_mode = mode;
             m_stream = stream;
+            m_stream.Seek(0, SeekOrigin.Begin);
             if (mode == BigArchiveMode.Create)
                 m_reader = null;
             else
@@ -145,13 +148,13 @@ namespace sage.big
         private void Read()
         {
             //start parsing the big
-            char[] magic = m_reader.ReadChars(4);
-            if (magic.SequenceEqual(new char[] { 'B', 'I', 'G', '4' }))
+            char[] fourcc = m_reader.ReadChars(4);
+            if (fourcc.SequenceEqual(new char[] { 'B', 'I', 'G', '4' }))
                 m_version = BigArchiveVersion.BIG4;
-            else if (magic.SequenceEqual(new char[] { 'B', 'I', 'G', 'F' }))
+            else if (fourcc.SequenceEqual(new char[] { 'B', 'I', 'G', 'F' }))
                 m_version = BigArchiveVersion.BIGF;
             else
-                throw new InvalidDataException("Not a known BIG format!");
+                throw new InvalidDataException("Not a known BIG format: " + new string(fourcc));
 
             m_size = m_reader.ReadInt32();
             m_numEntries = ReadReverseInt32(m_reader);
@@ -171,7 +174,7 @@ namespace sage.big
         /// <summary>
         /// Add a new entry to our dictionary and our list
         /// </summary>
-        /// <param name="entry"></param>
+        /// <param name="entry">The entry that should be added</param>
         private void AddEntry(BigArchiveEntry entry)
         {
             m_entries.Add(entry);
@@ -186,7 +189,7 @@ namespace sage.big
         /// <summary>
         /// Create a new  Entry
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The newly created Entry</returns>
         public BigArchiveEntry CreateEntry()
         {
             return null;
@@ -207,6 +210,9 @@ namespace sage.big
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// A ReadOnlyCollection of Entries inside the archive
+        /// </summary>
         public ReadOnlyCollection<BigArchiveEntry> Entries
         {
             get
@@ -215,6 +221,11 @@ namespace sage.big
             }
         }
 
+        /// <summary>
+        /// Returns an Entry from within the archive
+        /// </summary>
+        /// <param name="entryName">The name of the entry that should be returned</param>
+        /// <returns>The entry (can be null)</returns>
         public BigArchiveEntry GetEntry(string entryName)
         {
             if (entryName == null)
@@ -228,6 +239,9 @@ namespace sage.big
             return result;
         }
 
+        /// <summary>
+        /// Returns the underlying Stream
+        /// </summary>
         internal Stream ArchiveStream => m_stream;
 
         public BigArchiveMode Mode

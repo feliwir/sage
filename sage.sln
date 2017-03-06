@@ -8,6 +8,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "big", "big\big.csproj", "{F0A7E9B2-3D5E-40EE-8CE1-DEF68567DC7D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test", "test\test.csproj", "{1E61BD56-CDC6-4CBF-9BEB-7700EA67A7B3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C4EDDCCE-036B-4D30-87A5-118E46CDF29A} = {C4EDDCCE-036B-4D30-87A5-118E46CDF29A}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bfme", "bfme\bfme.csproj", "{2EFEFCDB-C200-419B-9730-8ABAC2EEFC94}"
 EndProject
