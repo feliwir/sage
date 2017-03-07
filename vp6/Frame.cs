@@ -26,10 +26,8 @@ namespace sage.vp6
     {
         private FrameType m_type;
         private int m_quantizer;
-        private Format m_format;
-        private Profile m_profile;
         private bool m_seperateCoeff;
-        private short m_coeffOffset;
+        private ushort m_coeffOffset;
         //Fragments/ Amount of MBs
         private byte m_vfrags;
         private byte m_hfrags;
@@ -45,7 +43,6 @@ namespace sage.vp6
         //Scaling mode
         ScalingMode m_scaling;
 
-
         //Read the FrameHeader
         public Frame(byte[] buf,Context c)
         {
@@ -58,13 +55,13 @@ namespace sage.vp6
             switch (m_type)
             {
                 case FrameType.INTRA:
-                    m_format = (Format)(buf[index] >> 3);
-                    m_profile = (Profile)(buf[index] & 0x06);
+                    c.Format = (Format)(buf[index] >> 3);
+                    c.Profile = (Profile)(buf[index] & 0x06);
                     ++index;
 
-                    if(m_seperateCoeff || m_profile == Profile.SIMPLE)
+                    if(m_seperateCoeff || c.Profile == Profile.SIMPLE)
                     {
-                        m_coeffOffset = BitConverter.ToInt16(buf, index);
+                        m_coeffOffset = (ushort)((buf[2] << 8) | buf[3]);
                         index += 2;
                     }
 
@@ -76,8 +73,8 @@ namespace sage.vp6
                         throw new InvalidDataException("Invalid size!");
                     }
 
-                    m_dimX = m_vfrags * 16;
-                    m_dimY = m_hfrags * 16;
+                    m_dimX = m_hfrags * 16;
+                    m_dimY = m_vfrags * 16;
 
                     m_ovfrags = buf[index++];
                     m_ohfrags = buf[index++];
@@ -85,22 +82,48 @@ namespace sage.vp6
                     m_presX = m_ovfrags * 16;
                     m_presY = m_ohfrags * 16;
 
+                    //check if size changed
+                    if(m_dimX!=c.Width||m_dimY!=c.Height)
+                    {
+                        c.Width = (uint)m_dimX;
+                        c.Height = (uint)m_dimY;
+                    }
+
                     c.RangeDec = new RangeDecoder(c, buf,index);
                     //this is the scaling mode
                     m_scaling = (ScalingMode)c.RangeDec.ReadBits(2);
+                    c.UpdateGolden = false;
                     break;
                 case FrameType.INTER:
-                    if (m_seperateCoeff || m_profile == Profile.SIMPLE)
+                    if (m_seperateCoeff || c.Profile == Profile.SIMPLE)
                     {
-                        m_coeffOffset = BitConverter.ToInt16(buf, index);
+                        m_coeffOffset = BitConverter.ToUInt16(buf, index);
                         index += 2;
                     }
 
                     c.RangeDec = new RangeDecoder(c, buf, index);
+                    c.UpdateGolden = Convert.ToBoolean(c.RangeDec.ReadBit());
+                    if(c.Profile==Profile.ADVANCED)
+                    {
+                        c.UseLoopFiltering = Convert.ToBoolean(c.RangeDec.ReadBit());
+                        if(c.UseLoopFiltering)
+                            c.LoopFilterSelector = Convert.ToBoolean(c.RangeDec.ReadBit());
+                    }
                     break;
             }
-        }
 
+            if(c.Profile==Profile.ADVANCED || c.Format==Format.VP62)
+            {
+                throw new NotImplementedException("Not implemented VP62 yet");
+            }
+
+            c.UseHuffman = Convert.ToBoolean(c.RangeDec.ReadBit());
+
+            if(m_coeffOffset>0)
+            {
+                c.HuffDec = new RangeDecoder(c, buf, m_coeffOffset);
+            }
+        }
 
         public FrameType Type { get => m_type; set => m_type = value; }
     }

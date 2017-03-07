@@ -16,6 +16,13 @@ namespace sage.vp6
         private StreamType m_type;
         private Frame m_golden;
         private RangeDecoder m_rangeDec;
+        private RangeDecoder m_huffDec;
+        private Profile m_profile;
+        private bool m_updateGolden;
+        private bool m_useLoopFiltering;
+        private bool m_loopFilterSelector;
+        private Format m_format;
+        private bool m_useHuffman;
 
         public uint Width { get => m_width; set => m_width = value; }
         public uint Height { get => m_height; set => m_height = value; }
@@ -24,8 +31,15 @@ namespace sage.vp6
         public uint Framecount { get => m_framecount; set => m_framecount = value; }
         public StreamType Type { get => m_type; set => m_type = value; }
         public RangeDecoder RangeDec { get => m_rangeDec; set => m_rangeDec = value; }
+        public Profile Profile { get => m_profile; set => m_profile = value; }
+        public bool UpdateGolden { get => m_updateGolden; set => m_updateGolden = value; }
+        public bool UseLoopFiltering { get => m_useLoopFiltering; set => m_useLoopFiltering = value; }
+        public bool LoopFilterSelector { get => m_loopFilterSelector; set => m_loopFilterSelector = value; }
+        public Format Format { get => m_format; set => m_format = value; }
+        public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
+        public RangeDecoder HuffDec { get => m_huffDec; set => m_huffDec = value; }
 
-        public Context(uint width, uint height, uint denominator,uint numerator,
+        public Context(uint width, uint height, uint denominator, uint numerator,
             uint framecount, StreamType type)
         {
             Width = width;
@@ -45,12 +59,12 @@ namespace sage.vp6
             return true;
         }
 
-        public void ProcessPacket(BinaryReader br,int packet_size)
+        public void ProcessPacket(BinaryReader br, int packet_size)
         {
             //Substract the first 8 bytes that have already been read
-            byte[] buffer =  br.ReadBytes(packet_size-8);
-            Frame frame = new Frame(buffer,this);
-           
+            byte[] buffer = br.ReadBytes(packet_size - 8);
+            Frame frame = new Frame(buffer, this);
+
         }
 
     }

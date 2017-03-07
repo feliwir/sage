@@ -15,18 +15,21 @@ namespace sage.refpack
         private bool stop = false;
         private byte[] prefix = new byte[4];
 
+        public bool IsCompressed { get => is_compressed; set => is_compressed = value; }
+        public int UncompressedLength { get => uncompressed_length; set => uncompressed_length = value; }
+
         public Decompressor(Stream stream)
         {
             br = new BinaryReader(stream);
-            readHeader();
+            ReadHeader();
         }
 
         public MemoryStream Decompress()
         {
-            ms = new MemoryStream(uncompressed_length);
+            ms = new MemoryStream(UncompressedLength);
             bw = new BinaryWriter(ms);
 
-            if (is_compressed)
+            if (IsCompressed)
             {
                 while (!stop)
                     DecompressionOneStep();
@@ -130,14 +133,14 @@ namespace sage.refpack
             br.BaseStream.Seek(pos, SeekOrigin.Begin);
         }
 
-        private void readHeader()
+        private void ReadHeader()
         {
             byte[] data = br.ReadBytes(6);
             UInt16 hdr = (UInt16)((data[0] << 8) | data[1]);
  
             if ((hdr & 0x3EFF) == 0x10FB)
             {
-                is_compressed = true;
+                IsCompressed = true;
                 uncompressed_length = (((data[2] << 8) | data[3]) | data[4]);
                 if ((data[0] & 0x80) != 0)
                 {
@@ -146,17 +149,7 @@ namespace sage.refpack
             }
         }
 
-        public Int32 GetUncompressedSize()
-        {
-            return uncompressed_length;
-        }
-
-        public bool IsCompressed()
-        {
-            return is_compressed;
-        }
-
-        private int readU24()
+        private int ReadU24()
         {
             return (br.ReadByte() << 16) | (br.ReadByte() << 8) | br.ReadByte();
         }
