@@ -9,7 +9,12 @@ namespace test
         [Fact]
         public void Decompress()
         {
-            Refpack.Decompress(File.Open("compressed.txt", FileMode.Open), File.Open("test.txt", FileMode.Open));
+            Decompressor dc = new Decompressor(File.Open("test/compressed.txt", FileMode.Open));
+            MemoryStream ms = dc.Decompress();
+            using (var fileStream = new FileStream("test/test.txt", FileMode.Create, FileAccess.Write))
+            {
+                ms.CopyTo(fileStream);
+            }
         }
     }
 }
