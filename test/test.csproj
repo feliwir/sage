@@ -23,6 +23,9 @@
     <None Update="test.big">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+	<None Update="uncompressed.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="test.vp6">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
