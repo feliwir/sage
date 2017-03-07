@@ -5,4 +5,8 @@
     <RootNamespace>sage.vp6</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Numerics.Vectors" Version="4.3.0" />
+  </ItemGroup>
+
 </Project>

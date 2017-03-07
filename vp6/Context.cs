@@ -6,7 +6,7 @@ using System.Text;
 namespace sage.vp6
 {
     //Decoder Context for VP6
-    public class Decoder
+    public class Context
     {
         private uint m_width;
         private uint m_height;
@@ -15,7 +15,7 @@ namespace sage.vp6
         private uint m_framecount;
         private StreamType m_type;
         private Frame m_golden;
-
+        private RangeDecoder m_rangeDec;
 
         public uint Width { get => m_width; set => m_width = value; }
         public uint Height { get => m_height; set => m_height = value; }
@@ -23,8 +23,9 @@ namespace sage.vp6
         public uint Numerator { get => m_numerator; set => m_numerator = value; }
         public uint Framecount { get => m_framecount; set => m_framecount = value; }
         public StreamType Type { get => m_type; set => m_type = value; }
+        public RangeDecoder RangeDec { get => m_rangeDec; set => m_rangeDec = value; }
 
-        public Decoder(uint width, uint height, uint denominator,uint numerator,
+        public Context(uint width, uint height, uint denominator,uint numerator,
             uint framecount, StreamType type)
         {
             Width = width;
@@ -48,7 +49,7 @@ namespace sage.vp6
         {
             //Substract the first 8 bytes that have already been read
             byte[] buffer =  br.ReadBytes(packet_size-8);
-            Frame frame = new Frame(buffer);
+            Frame frame = new Frame(buffer,this);
            
         }
 

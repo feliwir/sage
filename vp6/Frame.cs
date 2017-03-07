@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Numerics;
 
 namespace sage.vp6
 {
@@ -29,10 +30,24 @@ namespace sage.vp6
         private Profile m_profile;
         private bool m_seperateCoeff;
         private short m_coeffOffset;
-        private byte m_rows;
-        private byte m_cols;
+        //Fragments/ Amount of MBs
+        private byte m_vfrags;
+        private byte m_hfrags;
+        //Calculated size
+        private int m_dimX;
+        private int m_dimY;
+        //Output fragments
+        private int m_ovfrags;
+        private int m_ohfrags;
+        //Calculated output size
+        private int m_presX;
+        private int m_presY;
+        //Scaling mode
+        ScalingMode m_scaling;
+
+
         //Read the FrameHeader
-        public Frame(byte[] buf)
+        public Frame(byte[] buf,Context c)
         {
             int index = 0;
             m_type = (FrameType)(buf[index] & 0x80);
@@ -53,16 +68,35 @@ namespace sage.vp6
                         index += 2;
                     }
 
-                    m_rows = buf[index++];
-                    m_cols = buf[index++];
+                    m_vfrags = buf[index++];
+                    m_hfrags = buf[index++];
 
-                    if(m_rows==0||m_cols==0)
+                    if(m_vfrags == 0|| m_hfrags == 0)
                     {
                         throw new InvalidDataException("Invalid size!");
                     }
 
+                    m_dimX = m_vfrags * 16;
+                    m_dimY = m_hfrags * 16;
+
+                    m_ovfrags = buf[index++];
+                    m_ohfrags = buf[index++];
+
+                    m_presX = m_ovfrags * 16;
+                    m_presY = m_ohfrags * 16;
+
+                    c.RangeDec = new RangeDecoder(c, buf,index);
+                    //this is the scaling mode
+                    m_scaling = (ScalingMode)c.RangeDec.ReadBits(2);
                     break;
                 case FrameType.INTER:
+                    if (m_seperateCoeff || m_profile == Profile.SIMPLE)
+                    {
+                        m_coeffOffset = BitConverter.ToInt16(buf, index);
+                        index += 2;
+                    }
+
+                    c.RangeDec = new RangeDecoder(c, buf, index);
                     break;
             }
         }

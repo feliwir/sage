@@ -31,12 +31,12 @@ namespace sage.vp6
 
         private Stream m_stream;
         private BinaryReader m_reader;
-        private Decoder m_video;
-        private Decoder m_alpha;
+        private Context m_video;
+        private Context m_alpha;
         private int m_fourcc;
 
-        public Decoder Video { get => m_video; set => m_video = value; }
-        public Decoder Alpha { get => m_alpha; set => m_alpha = value; }
+        public Context Video { get => m_video; set => m_video = value; }
+        public Context Alpha { get => m_alpha; set => m_alpha = value; }
 
         public Demuxer(Stream s)
         {
@@ -155,10 +155,10 @@ namespace sage.vp6
             switch (type)
             {
                 case StreamType.VIDEO:
-                    Video = new Decoder(width, height, denominator, numerator, framecount,StreamType.VIDEO);
+                    Video = new Context(width, height, denominator, numerator, framecount,StreamType.VIDEO);
                     break;
                 case StreamType.ALPHA:
-                    m_alpha = new Decoder(width, height, denominator, numerator, framecount, StreamType.ALPHA);
+                    m_alpha = new Context(width, height, denominator, numerator, framecount, StreamType.ALPHA);
                     break;
             }
         }
