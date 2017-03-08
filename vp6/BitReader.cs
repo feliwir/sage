@@ -4,14 +4,14 @@ using System.Text;
 
 namespace sage.vp6
 {
-    public class RangeDecoder
+    internal class BitReader
     {
         int m_startpos;
         int m_index;
         int m_bit;
         byte[] m_buffer;
 
-        public RangeDecoder(Context c, byte[] buffer,int startpos)
+        public BitReader(byte[] buffer,int startpos)
         {
             m_startpos = startpos;
             m_buffer = buffer;

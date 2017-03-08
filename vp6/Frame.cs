@@ -24,22 +24,30 @@ namespace sage.vp6
 
     class Frame
     {
+        //Intra or Interframe
         private FrameType m_type;
+        private bool m_isGolden;
+        //Interlacing
         private int m_quantizer;
         private bool m_seperateCoeff;
         private ushort m_coeffOffset;
+        
         //Fragments/ Amount of MBs
         private byte m_vfrags;
         private byte m_hfrags;
+        
         //Calculated size
         private int m_dimX;
         private int m_dimY;
+       
         //Output fragments
         private int m_ovfrags;
         private int m_ohfrags;
+        
         //Calculated output size
         private int m_presX;
         private int m_presY;
+        
         //Scaling mode
         ScalingMode m_scaling;
 
@@ -79,8 +87,8 @@ namespace sage.vp6
                     m_ovfrags = buf[index++];
                     m_ohfrags = buf[index++];
 
-                    m_presX = m_ovfrags * 16;
-                    m_presY = m_ohfrags * 16;
+                    m_presX = m_ohfrags * 16;
+                    m_presY = m_ovfrags * 16;
 
                     //check if size changed
                     if(m_dimX!=c.Width||m_dimY!=c.Height)
@@ -89,10 +97,10 @@ namespace sage.vp6
                         c.Height = (uint)m_dimY;
                     }
 
-                    c.RangeDec = new RangeDecoder(c, buf,index);
+                    c.RangeDec = new BitReader(buf,index);
                     //this is the scaling mode
                     m_scaling = (ScalingMode)c.RangeDec.ReadBits(2);
-                    c.UpdateGolden = false;
+                    m_isGolden = false;
                     break;
                 case FrameType.INTER:
                     if (m_seperateCoeff || c.Profile == Profile.SIMPLE)
@@ -101,8 +109,8 @@ namespace sage.vp6
                         index += 2;
                     }
 
-                    c.RangeDec = new RangeDecoder(c, buf, index);
-                    c.UpdateGolden = Convert.ToBoolean(c.RangeDec.ReadBit());
+                    c.RangeDec = new BitReader(buf, index);
+                    m_isGolden = Convert.ToBoolean(c.RangeDec.ReadBit());
                     if(c.Profile==Profile.ADVANCED)
                     {
                         c.UseLoopFiltering = Convert.ToBoolean(c.RangeDec.ReadBit());
@@ -121,10 +129,23 @@ namespace sage.vp6
 
             if(m_coeffOffset>0)
             {
-                c.HuffDec = new RangeDecoder(c, buf, m_coeffOffset);
+                c.HuffDec = new BitReader(buf, m_coeffOffset);
+            }
+        }
+
+        public void Decode(Context c)
+        {
+            //Get the quantizer values
+            int dequant_ac = Dequantizer.AC[m_quantizer] << 2;
+            int dequant_dc = Dequantizer.DC[m_quantizer] << 2;
+
+            if(m_type==FrameType.INTRA)
+            {
+                c.Model.Default();
             }
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }
+        public bool IsGolden { get => m_isGolden; set => m_isGolden = value; }
     }
 }
