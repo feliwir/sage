@@ -28,6 +28,7 @@ namespace sage.vp6
         private bool m_loopFilterSelector;
         private Format m_format;
         private bool m_useHuffman;
+        private Macroblock[] m_macroblocks;
 
         public Context(uint width, uint height, uint denominator, uint numerator,
             uint framecount, StreamType type)
@@ -85,5 +86,6 @@ namespace sage.vp6
         public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
         internal BitReader HuffDec { get => m_huffDec; set => m_huffDec = value; }
         internal Model Model { get => m_model; set => m_model = value; }
+        internal Macroblock[] Macroblocks { get => m_macroblocks; set => m_macroblocks = value; }
     }
 }

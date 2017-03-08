@@ -91,10 +91,15 @@ namespace sage.vp6
                     m_presY = m_ovfrags * 16;
 
                     //check if size changed
-                    if(m_dimX!=c.Width||m_dimY!=c.Height)
+                    if(m_dimX!=c.Width||m_dimY!=c.Height||c.Macroblocks is null)
                     {
                         c.Width = (uint)m_dimX;
                         c.Height = (uint)m_dimY;
+                        //Allocate the Macroblocks
+                        c.Macroblocks = new Macroblock[m_vfrags * m_hfrags];
+                        for (int i = 0; i < c.Macroblocks.Length; ++i)
+                            c.Macroblocks[i] = new Macroblock();
+
                     }
 
                     c.RangeDec = new BitReader(buf,index);
@@ -142,7 +147,18 @@ namespace sage.vp6
             if(m_type==FrameType.INTRA)
             {
                 c.Model.Default();
+                //All macroblocks are intra frames
+                foreach(var mb in c.Macroblocks)
+                {
+                    mb.Type = CodingMode.INTRA;
+                }
             }
+            else
+            {
+                throw new NotImplementedException("Need to add decoding of INTER frames!");
+            }
+
+
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }
