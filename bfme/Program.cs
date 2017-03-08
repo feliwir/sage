@@ -1,5 +1,5 @@
-﻿using System;
-using sage;
+﻿using sage;
+
 namespace bfme
 {
     class Program
