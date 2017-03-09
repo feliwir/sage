@@ -135,16 +135,21 @@ namespace sage.refpack
 
         private void ReadHeader()
         {
-            byte[] data = br.ReadBytes(6);
-            UInt16 hdr = (UInt16)((data[0] << 8) | data[1]);
- 
-            if ((hdr & 0x3EFF) == 0x10FB)
+            byte[] hdr = br.ReadBytes(2);
+
+            if ((hdr[0] & 0x3E) == 0x10 && (hdr[1] == 0xFB))
             {
                 IsCompressed = true;
-                uncompressed_length = (((data[2] << 8) | data[3]) | data[4]);
-                if ((data[0] & 0x80) != 0)
+
+                bool is_long = ((hdr[0] & 0x80) != 0);
+                bool has_more = ((hdr[0] & 0x01) != 0);
+
+                byte[] buffer = br.ReadBytes((is_long ? 4 : 3) * (has_more ? 2 : 1));
+
+                uncompressed_length = (((buffer[0] << 8) + buffer[1]) << 8) + buffer[2];
+                if (is_long)
                 {
-                    uncompressed_length = (uncompressed_length << 8) | data[5];
+                    uncompressed_length = (uncompressed_length << 8) + buffer[3];
                 }
             }
         }
