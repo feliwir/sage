@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Numerics;
 
 namespace sage.vp6
 {
@@ -55,7 +52,7 @@ namespace sage.vp6
         public Frame(byte[] buf,Context c)
         {
             int index = 0;
-            m_type = (FrameType)(buf[index] & 0x80);
+            m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
             m_seperateCoeff = Convert.ToBoolean(buf[index] & 0x01);
             ++index;
@@ -155,10 +152,26 @@ namespace sage.vp6
             }
             else
             {
-                throw new NotImplementedException("Need to add decoding of INTER frames!");
+                
             }
 
+            ParseCoeffModels(c);
+        }
 
+        private void ParseCoeffModels(Context c)
+        {
+            int[] DefaultProbe = new int[11];
+
+            for(int i=0;i<DefaultProbe.Length;++i)
+                DefaultProbe[i] = 0x80;
+
+            for(int pt=0;pt<2;++pt)
+            {
+                for(int node=0;node<11;++node)
+                {
+                    
+                }
+            }
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }

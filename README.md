@@ -2,7 +2,7 @@
 
 This project is trying to reimplement the functionality from the SAGE (Strategy Action Game Engine) written by EA. The reason for this is that the current engine is not working very well on modern CPUs since has many technical limitations
 
-#Build status
+# Build status
 [![Build status](https://ci.appveyor.com/api/projects/status/f4re4pcqyr5g0naf?svg=true)](https://ci.appveyor.com/project/feliwir/sage)
 
 # Components
