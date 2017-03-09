@@ -75,8 +75,7 @@ namespace sage.vp6
 
                     if(m_seperateCoeff || c.Profile == Profile.SIMPLE)
                     {
-                        m_coeffOffset = (ushort)((buf[2] << 8) | buf[3]);
-                        index += 2;
+                        m_coeffOffset = (ushort)((buf[index++] << 8) | buf[index++]);
                     }
 
                     m_vfrags = buf[index++];
@@ -116,8 +115,7 @@ namespace sage.vp6
                 case FrameType.INTER:
                     if (m_seperateCoeff || c.Profile == Profile.SIMPLE)
                     {
-                        m_coeffOffset = BitConverter.ToUInt16(buf, index);
-                        index += 2;
+                        m_coeffOffset = (ushort)((buf[index++] << 8) | buf[index++]);
                     }
 
                     c.RangeDec = new RangeDecoder(buf, index);
