@@ -24,11 +24,14 @@ namespace sage.vp6
         //Intra or Interframe
         private FrameType m_type;
         private bool m_isGolden;
-        //Interlacing
+
+        //Arithmetic coding 
         private int m_quantizer;
+        private int m_dequant_ac;
+        private int m_dequant_dc;
         private bool m_seperateCoeff;
         private ushort m_coeffOffset;
-        
+
         //Fragments/ Amount of MBs
         private byte m_vfrags;
         private byte m_hfrags;
@@ -45,6 +48,7 @@ namespace sage.vp6
         private int m_presX;
         private int m_presY;
         
+ 
         //Scaling mode
         ScalingMode m_scaling;
 
@@ -54,6 +58,11 @@ namespace sage.vp6
             int index = 0;
             m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
+            
+            //Get the quantizer values
+            m_dequant_ac = Dequantizer.AC[m_quantizer] << 2;
+            m_dequant_dc = Dequantizer.DC[m_quantizer] << 2;
+
             m_seperateCoeff = Convert.ToBoolean(buf[index] & 0x01);
             ++index;
 
@@ -99,7 +108,7 @@ namespace sage.vp6
 
                     }
 
-                    c.RangeDec = new BitReader(buf,index);
+                    c.RangeDec = new RangeDecoder(buf,index);
                     //this is the scaling mode
                     m_scaling = (ScalingMode)c.RangeDec.ReadBits(2);
                     m_isGolden = false;
@@ -111,7 +120,7 @@ namespace sage.vp6
                         index += 2;
                     }
 
-                    c.RangeDec = new BitReader(buf, index);
+                    c.RangeDec = new RangeDecoder(buf, index);
                     m_isGolden = Convert.ToBoolean(c.RangeDec.ReadBit());
                     if(c.Profile==Profile.ADVANCED)
                     {
@@ -131,15 +140,12 @@ namespace sage.vp6
 
             if(m_coeffOffset>0)
             {
-                c.HuffDec = new BitReader(buf, m_coeffOffset);
+                c.HuffDec = new RangeDecoder(buf, m_coeffOffset);
             }
         }
 
         public void Decode(Context c)
         {
-            //Get the quantizer values
-            int dequant_ac = Dequantizer.AC[m_quantizer] << 2;
-            int dequant_dc = Dequantizer.DC[m_quantizer] << 2;
 
             if(m_type==FrameType.INTRA)
             {
@@ -172,6 +178,12 @@ namespace sage.vp6
                     
                 }
             }
+        }
+
+        private int ReadBitProbability(int prob)
+        {
+           
+            return 0;
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }

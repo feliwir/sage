@@ -1,6 +1,6 @@
 ﻿namespace sage.vp6
 {
-    internal class BitReader
+    internal class RangeDecoder
     {
         internal byte[] NormShift = new byte[256] {
             8,7,6,6,5,5,5,5,4,4,4,4,4,4,4,4,
@@ -21,11 +21,17 @@
         int m_index;
         int m_bit;
         byte[] m_buffer;
+        byte m_high;
+        sbyte m_bits;
+        ulong m_codeword;
 
-        public BitReader(byte[] buffer,int startpos)
+        public RangeDecoder(byte[] buffer,int startpos)
         {
+            m_index = 1;
             m_startpos = startpos;
             m_buffer = buffer;
+            m_codeword = (ulong)(buffer[startpos+m_index++] << 8);
+            m_codeword |= (ulong)(buffer[startpos + m_index++]);
         }
 
         public int ReadBits(int bits)

@@ -10,8 +10,8 @@ namespace test
         public void Demuxer()
         {
             Demuxer demuxer = new Demuxer(File.Open("test.vp6", FileMode.Open));
-            Assert.Equal((decimal)demuxer.Video.Width, 64);
-            Assert.Equal((decimal)demuxer.Video.Height, 64);           
+            Assert.Equal((decimal)demuxer.Video.Width, 640);
+            Assert.Equal((decimal)demuxer.Video.Height, 480);           
         }
     }
 }
