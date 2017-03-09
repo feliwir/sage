@@ -173,15 +173,12 @@ namespace sage.vp6
             {
                 for(int node=0;node<11;++node)
                 {
-                    
+                    if(c.RangeDec.GetBitProbability(RangeDecoder.DccvPct[pt,node])>0)
+                    {
+
+                    }
                 }
             }
-        }
-
-        private int ReadBitProbability(int prob)
-        {
-           
-            return 0;
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }
