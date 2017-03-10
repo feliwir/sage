@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace sage.refpack
@@ -15,6 +16,8 @@ namespace sage.refpack
         private bool stop = false;
         private byte[] prefix = new byte[4];
 
+        private List<byte> test;
+
         public bool IsCompressed { get => is_compressed; set => is_compressed = value; }
         public int UncompressedLength { get => uncompressed_length; set => uncompressed_length = value; }
 
@@ -22,6 +25,7 @@ namespace sage.refpack
         {
             br = new BinaryReader(stream);
             ReadHeader();
+            test = new List<byte>();
         }
 
         public MemoryStream Decompress()
@@ -32,7 +36,9 @@ namespace sage.refpack
             if (IsCompressed)
             {
                 while (!stop)
+                {
                     DecompressionOneStep();
+                }
             }
             else
             {
@@ -76,6 +82,8 @@ namespace sage.refpack
                     CopyShort();
                 }
             }
+            var str = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            int i = 0;
         }
 
         void CopyShort()
@@ -84,7 +92,12 @@ namespace sage.refpack
             long num_src_bytes = prefix[0] & 3;
             long num_dst_bytes = ((prefix[0] & 0x1C) >> 2) + 3;
             long dst_offset = (((prefix[0] & 0x60) << 3) | prefix[1]) + 1;
-            bw.Write(br.ReadBytes((int)num_src_bytes));
+            long pos = br.BaseStream.Position;
+            byte[] data = br.ReadBytes((int)num_src_bytes);
+            test.AddRange(data);
+            bw.Write(data);
+            long pos2 = br.BaseStream.Position;
+            var str = System.Text.Encoding.UTF8.GetString(ms.ToArray());
             Copy(dst_offset, num_dst_bytes);
         }
 
@@ -95,7 +108,9 @@ namespace sage.refpack
             long num_src_bytes = prefix[1] >> 6;
             long num_dst_bytes = (prefix[0] & 0x3F) + 4;
             long dst_offset = (((prefix[1] & 0x3F) << 8) | prefix[2]) + 1;
-            bw.Write(br.ReadBytes((int)num_src_bytes));
+            byte[] data = br.ReadBytes((int)num_src_bytes);
+            test.AddRange(data);
+            bw.Write(data);
             Copy(dst_offset, num_dst_bytes);
         }
 
@@ -107,30 +122,53 @@ namespace sage.refpack
             long num_src_bytes = prefix[0] & 3;
             long num_dst_bytes = (((prefix[0] & 0x0C) << 6) | prefix[3]) + 5;
             long dst_offset = (((((prefix[0] & 0x10) << 4) | prefix[1]) << 8) | prefix[2]) + 1;
-            bw.Write(br.ReadBytes((int)num_src_bytes));
+            byte[] data = br.ReadBytes((int)num_src_bytes);
+            test.AddRange(data);
+            bw.Write(data);
             Copy(dst_offset, num_dst_bytes);
         }
 
         void ImmediateBytesAndFinish()
         {
             long num_src_bytes = prefix[0] & 3;
-            bw.Write(br.ReadBytes((int)num_src_bytes));
+            byte[] data = br.ReadBytes((int)num_src_bytes);
+            test.AddRange(data);
+            bw.Write(data);
             stop = true;
         }
 
         void ImmediateBytesLong()
         {
             long num_src_bytes = ((prefix[0] & 0x1F) + 1) * 4;
-            bw.Write(br.ReadBytes((int)num_src_bytes));
+            byte[] data = br.ReadBytes((int)num_src_bytes);
+            test.AddRange(data);
+            bw.Write(data);
         }
 
         void Copy(long offset, long length)
         {
-            long pos = br.BaseStream.Position;
-            long off = (pos - offset) % br.BaseStream.Length;
-            br.BaseStream.Seek(off, SeekOrigin.Current);
-            bw.Write(br.ReadBytes((int)length));
-            br.BaseStream.Seek(pos, SeekOrigin.Begin);
+            //long pos = br.BaseStream.Position;
+            //br.BaseStream.Seek(-offset, SeekOrigin.Current);
+            //long pos_new = br.BaseStream.Position;
+            //byte[] data = br.ReadBytes((int)length);
+            long size = test.Count;
+            int idx = (int)(size - offset);
+            for (int i = 0; i < length; i++)
+            { 
+                bw.Write(test[idx + i]);
+                test.Add(test[idx + i]);
+            }
+            //bw.Write(data);
+            //var str = System.Text.Encoding.UTF8.GetString(data);
+            //bw.Write(data);
+            //br.BaseStream.Seek(pos , SeekOrigin.Begin);
+        }
+
+        void Pump(int count)
+        {
+            byte[] data = br.ReadBytes(count);
+            test.AddRange(data);
+            bw.Write(data);
         }
 
         private void ReadHeader()
