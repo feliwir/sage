@@ -18,8 +18,8 @@ namespace sage.vp6
         private Frame m_previous;
         private Frame m_current;
         private Model m_model;
-        private BitReader m_rangeDec;
-        private BitReader m_huffDec;
+        private RangeDecoder m_rangeDec;
+        private RangeDecoder m_huffDec;
         private Profile m_profile;
         private bool m_useLoopFiltering;
         private bool m_loopFilterSelector;
@@ -75,13 +75,13 @@ namespace sage.vp6
         public uint Numerator { get => m_numerator; set => m_numerator = value; }
         public uint Framecount { get => m_framecount; set => m_framecount = value; }
         public StreamType Type { get => m_type; set => m_type = value; }
-        internal BitReader RangeDec { get => m_rangeDec; set => m_rangeDec = value; }
+        internal RangeDecoder RangeDec { get => m_rangeDec; set => m_rangeDec = value; }
         public Profile Profile { get => m_profile; set => m_profile = value; }
         public bool UseLoopFiltering { get => m_useLoopFiltering; set => m_useLoopFiltering = value; }
         public bool LoopFilterSelector { get => m_loopFilterSelector; set => m_loopFilterSelector = value; }
         public Format Format { get => m_format; set => m_format = value; }
         public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
-        internal BitReader HuffDec { get => m_huffDec; set => m_huffDec = value; }
+        internal RangeDecoder HuffDec { get => m_huffDec; set => m_huffDec = value; }
         internal Model Model { get => m_model; set => m_model = value; }
         internal Macroblock[] Macroblocks { get => m_macroblocks; set => m_macroblocks = value; }
     }

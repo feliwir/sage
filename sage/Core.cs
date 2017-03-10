@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using sage.big;
 using sage.vp6;
+using System;
 
 namespace sage
 {
@@ -15,6 +16,9 @@ namespace sage
         public Core(string root)
         {
             m_rootDir = root;
+
+            Console.WriteLine("Root directory is:"+ m_rootDir);
+            Console.WriteLine("Initializing SAGE...");
 
             //List all big archives in this folder
             foreach (string file in Directory.GetFiles(m_rootDir, "*.big", SearchOption.AllDirectories))

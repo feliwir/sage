@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Xunit;
 using sage.refpack;
+using System;
 
 namespace test
 {
@@ -9,9 +10,10 @@ namespace test
         [Fact]
         public void Decompress()
         {
-            Decompressor dc = new Decompressor(File.Open("test/compressed.txt", FileMode.Open));
+            Console.WriteLine(Directory.GetCurrentDirectory());
+            Decompressor dc = new Decompressor(File.Open("compressed.txt", FileMode.Open));
             MemoryStream ms = dc.Decompress();
-            File.WriteAllBytes("test.txt", ms.ToArray());
+            ms.WriteTo(File.Create("test.txt"));
         }
     }
 }
