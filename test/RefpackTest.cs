@@ -11,9 +11,9 @@ namespace test
         public void Decompress()
         {
             Console.WriteLine(Directory.GetCurrentDirectory());
-            Decompressor dc = new Decompressor(File.Open("compressed.txt", FileMode.Open));
+            Decompressor dc = new Decompressor(File.Open("test/compressed.txt", FileMode.Open));
             MemoryStream ms = dc.Decompress();
-            ms.WriteTo(File.Create("test.txt"));
+            ms.WriteTo(File.Create("test/test.txt"));
         }
     }
 }
