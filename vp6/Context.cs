@@ -9,6 +9,8 @@ namespace sage.vp6
         //STREAM INFORMATION
         private uint m_width;
         private uint m_height;
+        private uint m_mbWidth;
+        private uint m_mbHeight;
         private uint m_denominator;
         private uint m_numerator;
         private uint m_framecount;
@@ -27,7 +29,8 @@ namespace sage.vp6
         private Reference[] m_aboveBlocks;
         private Reference[] m_leftBlocks;
         private int[] m_aboveBlocksIdx;
-
+        private int m_vectorCandidatePos;
+        private Motionvector[] m_vectorCandidate;
         //REQUIRED for prediction
         private short[,] m_prevDc;
         //Information regarding the frames
@@ -50,6 +53,7 @@ namespace sage.vp6
             Model = new Model();
             PrevDc = new short[3, 3];
             AboveBlocksIdx = new int[6];
+            VectorCandidate = new Motionvector[2];
         }
 
         /// <summary>
@@ -82,6 +86,41 @@ namespace sage.vp6
             Frames[FrameSelect.CURRENT] = frame;
         }
 
+        public void ParseCoefficients()
+        {
+            int ctx,coeff_index;
+            int pt = 0;
+            byte[] model1, model2;
+            for(int b=0;b<6;++b)
+            {
+                //codetyps
+                int ct = 1;
+                int run = 1;
+
+                if (b > 3)
+                    pt = 1;
+
+                ctx = LeftBlocks[Data.B6To4[b]].NotNullDc + AboveBlocks[AboveBlocksIdx[b]].NotNullDc;
+                model1 = Util.GetSlice(Model.CoeffDccv,pt);
+                model2 = Util.GetSlice(Model.CoeffDcct, pt, ctx);
+
+                coeff_index = 0;
+                for(;;)
+                {
+                    if((coeff_index>1 && ct==0)|| RangeDec.GetBitProbability(model2[0])>0)
+                    {
+                        if(RangeDec.GetBitProbability(model2[2])>0)
+                        {
+                            if (RangeDec.GetBitProbability(model2[3]) > 0)
+                            {
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public uint Width { get => m_width; set => m_width = value; }
         public uint Height { get => m_height; set => m_height = value; }
         public uint Denominator { get => m_denominator; set => m_denominator = value; }
@@ -105,5 +144,9 @@ namespace sage.vp6
         public uint UvSize { get => m_uvSize; set => m_uvSize = value; }
         internal Reference[] LeftBlocks { get => m_leftBlocks; set => m_leftBlocks = value; }
         public int[] AboveBlocksIdx { get => m_aboveBlocksIdx; set => m_aboveBlocksIdx = value; }
+        public uint MbWidth { get => m_mbWidth; set => m_mbWidth = value; }
+        public uint MbHeight { get => m_mbHeight; set => m_mbHeight = value; }
+        public int VectorCandidatePos { get => m_vectorCandidatePos; set => m_vectorCandidatePos = value; }
+        internal Motionvector[] VectorCandidate { get => m_vectorCandidate; set => m_vectorCandidate = value; }
     }
 }

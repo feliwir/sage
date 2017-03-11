@@ -108,6 +108,8 @@ namespace sage.vp6
                     //check if size changed
                     if(m_dimX!=c.Width||m_dimY!=c.Height||c.Macroblocks is null)
                     {
+                        c.MbWidth = m_hfrags;
+                        c.MbHeight = m_vfrags;
                         c.Width = (uint)m_dimX;
                         c.Height = (uint)m_dimY;
                         //Allocate the Macroblocks
@@ -116,7 +118,7 @@ namespace sage.vp6
                             c.Macroblocks[i] = new Macroblock();
 
                         //Allocate the above Blocks
-                        c.AboveBlocks = new Reference[4 * m_vfrags + 6];
+                        c.AboveBlocks = new Reference[4 * m_hfrags + 6];
 
                         //Set stride & size
                         c.YStride = c.Width;
@@ -187,18 +189,18 @@ namespace sage.vp6
             c.PrevDc[1, FrameSelect.CURRENT] = 128;
             c.PrevDc[2, FrameSelect.CURRENT] = 128;
 
-            for (int block = 0; block < 4 * m_vfrags + 6; block++)
+            for (int block = 0; block < 4 * c.MbWidth + 6; block++)
             {
                 c.AboveBlocks[block].RefFrame = FrameSelect.NONE;
                 c.AboveBlocks[block].DcCoeff = 0;
                 c.AboveBlocks[block].NotNullDc = 0;
             }
 
-            c.AboveBlocks[2 * m_vfrags + 2].RefFrame = FrameSelect.CURRENT;
-            c.AboveBlocks[3 * m_vfrags + 4].RefFrame = FrameSelect.CURRENT;
+            c.AboveBlocks[2 * c.MbWidth + 2].RefFrame = FrameSelect.CURRENT;
+            c.AboveBlocks[3 * c.MbWidth + 4].RefFrame = FrameSelect.CURRENT;
 
             //The loop for decoding each Macroblock
-            for(int row=0;row<m_vfrags;++row)
+            for(int row=0;row<c.MbHeight;++row)
             {
                 for(int block=0;block<4;++block)
                 {
@@ -211,19 +213,93 @@ namespace sage.vp6
                 c.AboveBlocksIdx[1] = 2;
                 c.AboveBlocksIdx[2] = 1;
                 c.AboveBlocksIdx[3] = 2;
-                c.AboveBlocksIdx[4] = 2 * m_hfrags + 2 + 1;
-                c.AboveBlocksIdx[5] = 3 * m_hfrags + 4 + 1;
+                c.AboveBlocksIdx[4] = 2 * (int)c.MbWidth + 2 + 1;
+                c.AboveBlocksIdx[5] = 3 * (int)c.MbWidth + 4 + 1;
 
                 //calculate the pixeloffset for each block
-                BlockOffset[0] = (int)(m_vfrags * c.YStride * 16);      //UPPER LEFT
+                BlockOffset[0] = (int)(row * c.YStride * 16);      //UPPER LEFT
                 BlockOffset[1] = BlockOffset[0] + 8;                    //UPPER RIGHT
                 BlockOffset[2] = (int)(BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
                 BlockOffset[3] = BlockOffset[2] + 8;                    //LOWER RIGHT
-                BlockOffset[4] = (int)(m_vfrags * 8 * c.UvStride);      //OFFSET IN U PLANE
+                BlockOffset[4] = (int)(row * 8 * c.UvStride);      //OFFSET IN U PLANE
                 BlockOffset[5] = BlockOffset[4];                        //OFFSET IN V PLANE
+
+                for(int column=0;column<c.MbWidth;++column)
+                {
+                    DecodeMacroblock(c, row, column);
+                }
+            }          
+        }
+
+        private void DecodeMacroblock(Context c,int row,int column)
+        {
+            CodingMode mode;
+            int ref_frame;
+            if (m_type==FrameType.INTRA)
+            {
+                mode = CodingMode.INTRA;
+            }
+            else
+            {
+                mode = DecodeMotionvector(c, row, column);
             }
 
-           
+            ref_frame = Data.ReferenceFrame[(int)mode];
+
+            c.ParseCoefficients();
+        }
+
+        static private int GetVectorPredictors(Context c, int row, int column, int ref_frame)
+        {
+            int nb_preds = 0;
+            Motionvector[] vect = new Motionvector[2];
+            Motionvector mvp = new Motionvector();
+            int offset = 0;
+
+            for (int pos = 0; pos < 12; ++pos)
+            {
+                mvp.X = column + Data.CandidatePredictorPos[pos, 0];
+                mvp.Y = row + Data.CandidatePredictorPos[pos, 1];
+
+                if (mvp.X < 0 || mvp.X >= c.MbWidth ||
+                    mvp.Y < 0 || mvp.Y >= c.MbHeight)
+                    continue;
+
+                offset = (int)(mvp.X + c.MbWidth * mvp.Y);
+
+                //this is not the frametype we are looking for, so skip the rest of this loop
+                if (Data.ReferenceFrame[(int)c.Macroblocks[offset].Type] != ref_frame)
+                    continue;
+
+                //this motion vector is either same as last frame or (0,0)
+                if ((c.Macroblocks[offset].Mv.X == vect[0].X &&
+                     c.Macroblocks[offset].Mv.Y == vect[0].Y) ||
+                    (c.Macroblocks[offset].Mv.X == 0 &&
+                     c.Macroblocks[offset].Mv.Y == 0))
+                    continue;
+
+                vect[nb_preds++] = c.Macroblocks[offset].Mv;
+                if(nb_preds>1)
+                {
+                    nb_preds = -1;
+                    break;
+                }
+
+                c.VectorCandidatePos = pos;
+            }
+
+            c.VectorCandidate = vect;
+            return nb_preds;
+        }
+
+        private CodingMode DecodeMotionvector(Context c,int row,int column)
+        {
+            int ctx = GetVectorPredictors(c, row, column, FrameSelect.PREVIOUS);
+
+
+            
+
+            return CodingMode.INTER_MV;
         }
 
         private void ParseCoeffModels(Context c)

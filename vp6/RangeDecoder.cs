@@ -101,8 +101,15 @@ namespace sage.vp6
             }
             m_bits = bits;
             return codeword;
-        }
+        }     
+    }
 
-       
+    internal struct Tree
+    {
+        sbyte m_value;
+        sbyte m_probIdx;
+
+        public sbyte Value { get => m_value; set => m_value = value; }
+        public sbyte ProbIdx { get => m_probIdx; set => m_probIdx = value; }
     }
 }

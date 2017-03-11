@@ -6,6 +6,8 @@ namespace sage.vp6
 {
     class Data
     {
+        internal static readonly byte[] B6To4 = new byte[6] { 0, 0, 1, 1, 2, 3 };
+
         internal static readonly byte[] NormShift = new byte[256] {
             8,7,6,6,5,5,5,5,4,4,4,4,4,4,4,4,
             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
@@ -82,11 +84,41 @@ namespace sage.vp6
             { 146, 255, 181, 207, 232, 243, 238, 251, 244, 250, 249 },
             { 179, 255, 214, 240, 250, 255, 244, 255, 255, 255, 255 },
         };
+
         //equations for converting Dccv to Dcct
         internal static readonly int[,,] DccvLc = new int[3,5,2] {
           { { 122, 133 }, { 0, 1 }, { 78,  171 }, { 139, 117 }, { 168, 79 } },
           { { 133,  51 }, { 0, 1 }, { 169,  71 }, { 214,  44 }, { 210, 38 } },
           { { 142, -16 }, { 0, 1 }, { 221, -30 }, { 246,  -3 }, { 203, 17 } },
+        };
+
+        //candidate predictor positions
+        internal static readonly sbyte[,] CandidatePredictorPos = new sbyte[12,2] {
+            {  0, -1 },
+            { -1,  0 },
+            { -1, -1 },
+            {  1, -1 },
+            {  0, -2 },
+            { -2,  0 },
+            { -2, -1 },
+            { -1, -2 },
+            {  1, -2 },
+            {  2, -1 },
+            { -2, -2 },
+            {  2, -2 },
+        };
+
+        internal static readonly int[] ReferenceFrame = new int[10] {
+            FrameSelect.PREVIOUS,  /* VP56_MB_INTER_NOVEC_PF */
+            FrameSelect.CURRENT,   /* VP56_MB_INTRA */
+            FrameSelect.PREVIOUS,  /* VP56_MB_INTER_DELTA_PF */
+            FrameSelect.PREVIOUS,  /* VP56_MB_INTER_V1_PF */
+            FrameSelect.PREVIOUS,  /* VP56_MB_INTER_V2_PF */
+            FrameSelect.GOLDEN,    /* VP56_MB_INTER_NOVEC_GF */
+            FrameSelect.GOLDEN,    /* VP56_MB_INTER_DELTA_GF */
+            FrameSelect.PREVIOUS,  /* VP56_MB_INTER_4V */
+            FrameSelect.GOLDEN,    /* VP56_MB_INTER_V1_GF */
+            FrameSelect.GOLDEN,    /* VP56_MB_INTER_V2_GF */
         };
     }
 }

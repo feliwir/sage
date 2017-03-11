@@ -18,11 +18,9 @@
         };
 
         private CodingMode m_type;
-        private short m_vx;
-        private short m_vy;
+        private Motionvector m_mv;
 
-        public short Vx { get => m_vx; set => m_vx = value; }
-        public short Vy { get => m_vy; set => m_vy = value; }
         public CodingMode Type { get => m_type; set => m_type = value; }
+        internal Motionvector Mv { get => m_mv; set => m_mv = value; }
     }
 }
