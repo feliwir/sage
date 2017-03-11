@@ -16,13 +16,13 @@
             { 244, 184, 201, 44, 173, 221, 239, 253 },
         };
 
-        private static readonly byte[,] DefaultVectorPdvModel = new byte[2,7] {
+        private static readonly byte[,] DefaultVectorPdvModel = new byte[2, 7] {
             { 225, 146, 172, 147, 214,  39, 156 },
             { 204, 170, 119, 235, 140, 230, 228 },
 
         };
 
-        private static readonly byte[,] DefaultRunvCoeffModel = new byte[2,14] {
+        private static readonly byte[,] DefaultRunvCoeffModel = new byte[2, 14] {
             { 198, 197, 196, 146, 198, 204, 169, 142, 130, 136, 149, 149, 191, 249 },
             { 135, 201, 181, 154,  98, 117, 132, 126, 146, 169, 184, 240, 246, 254 },
         };
@@ -46,12 +46,22 @@
         private byte[,] m_vectorPdv = new byte[2, 7];
         private byte[,] m_vectorFdv = new byte[2, 8];
         private byte[,] m_coeffRunv = new byte[2, 14];
+        private byte[,] m_coeffDccv = new byte[2, 11];
+        private byte[,,,] m_coeffRact = new byte[2, 3, 6, 11];
+        private byte[,,] m_coeffDcct = new byte[2, 36, 5];
         private byte[,,] m_defMbTypesStats;
 
         public Model()
         {
             Default();
         }
+
+        public byte[,] CoeffDccv { get => m_coeffDccv; set => m_coeffDccv = value; }
+        public byte[] CoeffReorder { get => m_coeffReorder; set => m_coeffReorder = value; }
+        public byte[] CoeffIndexToPos { get => m_coeffIndexToPos; set => m_coeffIndexToPos = value; }
+        public byte[,] CoeffRunv { get => m_coeffRunv; set => m_coeffRunv = value; }
+        public byte[,,,] CoeffRact { get => m_coeffRact; set => m_coeffRact = value; }
+        public byte[,,] CoeffDcct { get => m_coeffDcct; set => m_coeffDcct = value; }
 
         public void Default()
         {
@@ -63,21 +73,21 @@
             m_defMbTypesStats = DefaultMbTypesStats;
             m_vectorFdv = DefaultVectorFdvModel;
             m_vectorPdv = DefaultVectorPdvModel;
-            m_coeffReorder = DefaultCoeffReorder;
-            m_coeffRunv = DefaultRunvCoeffModel;
+            CoeffReorder = DefaultCoeffReorder;
+            CoeffRunv = DefaultRunvCoeffModel;
 
-            CoeffOrderTable();
+            InitializeCoeffOrderTable();
 
         }
 
-        private void CoeffOrderTable()
+        public void InitializeCoeffOrderTable()
         {
             byte i, pos, idx = 1;
 
             for (i = 0; i < 16; i++)
                 for (pos = 1; pos < 64; pos++)
-                    if (m_coeffReorder[pos] == i)
-                        m_coeffIndexToPos[idx++] = pos;
+                    if (CoeffReorder[pos] == i)
+                        CoeffIndexToPos[idx++] = pos;
         }
 
     }

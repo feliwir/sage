@@ -21,16 +21,17 @@ namespace sage
             Console.WriteLine("Initializing SAGE...");
 
             //List all big archives in this folder
+            Console.WriteLine("Loading all archives...");
             foreach (string file in Directory.GetFiles(m_rootDir, "*.big", SearchOption.AllDirectories))
             {
                 BigArchive arch = new BigArchive(File.Open(file, FileMode.Open));
             }
 
             //Play all vp6 videos
-            foreach (string file in Directory.GetFiles(m_rootDir, "*.vp6", SearchOption.AllDirectories))
-            {
-                Demuxer vid = new Demuxer(File.Open(file, FileMode.Open));
-            }
+            Console.WriteLine("Loading all videos...");            
+            Demuxer vid = new Demuxer(File.Open("F:/Development/Repositories/sage/test/test.vp6", FileMode.Open,FileAccess.Read,FileShare.Read));
+
+
         }
     }
 }

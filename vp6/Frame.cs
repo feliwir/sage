@@ -18,9 +18,16 @@ namespace sage.vp6
         INTER = 1
     }
 
+    public struct FrameSelect
+    {
+        public const int NONE       = -1;
+        public const int CURRENT    = 0;
+        public const int PREVIOUS   = 1;
+        public const int GOLDEN     = 2;
+    }
 
     class Frame
-    {
+    {     
         //Intra or Interframe
         private FrameType m_type;
         private bool m_isGolden;
@@ -47,8 +54,10 @@ namespace sage.vp6
         //Calculated output size
         private int m_presX;
         private int m_presY;
-        
- 
+
+        private int[] m_blockOffset;
+        private bool m_useHuffman;
+
         //Scaling mode
         ScalingMode m_scaling;
 
@@ -56,6 +65,7 @@ namespace sage.vp6
         public Frame(byte[] buf,Context c)
         {
             int index = 0;
+            m_blockOffset = new int[6];
             m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
             
@@ -105,6 +115,15 @@ namespace sage.vp6
                         for (int i = 0; i < c.Macroblocks.Length; ++i)
                             c.Macroblocks[i] = new Macroblock();
 
+                        //Allocate the above Blocks
+                        c.AboveBlocks = new Reference[4 * m_vfrags + 6];
+
+                        //Set stride & size
+                        c.YStride = c.Width;
+                        c.UvStride = c.YStride / 2;
+                        c.YSize = c.YStride * (c.Height);
+                        c.UvSize = c.YSize / 4;
+
                     }
 
                     c.RangeDec = new RangeDecoder(buf,index);
@@ -134,7 +153,7 @@ namespace sage.vp6
                 throw new NotImplementedException("Not implemented VP62 yet");
             }
 
-            c.UseHuffman = Convert.ToBoolean(c.RangeDec.ReadBit());
+            m_useHuffman = Convert.ToBoolean(c.RangeDec.ReadBit());
 
             if(m_coeffOffset>0)
             {
@@ -160,28 +179,139 @@ namespace sage.vp6
             }
 
             ParseCoeffModels(c);
+
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                    c.PrevDc[i, j] = 0;
+
+            c.PrevDc[1, FrameSelect.CURRENT] = 128;
+            c.PrevDc[2, FrameSelect.CURRENT] = 128;
+
+            for (int block = 0; block < 4 * m_vfrags + 6; block++)
+            {
+                c.AboveBlocks[block].RefFrame = FrameSelect.NONE;
+                c.AboveBlocks[block].DcCoeff = 0;
+                c.AboveBlocks[block].NotNullDc = 0;
+            }
+
+            c.AboveBlocks[2 * m_vfrags + 2].RefFrame = FrameSelect.CURRENT;
+            c.AboveBlocks[3 * m_vfrags + 4].RefFrame = FrameSelect.CURRENT;
+
+            //The loop for decoding each Macroblock
+            for(int row=0;row<m_vfrags;++row)
+            {
+                for(int block=0;block<4;++block)
+                {
+                    c.LeftBlocks[block].RefFrame = FrameSelect.NONE;
+                    c.LeftBlocks[block].DcCoeff = 0;
+                    c.LeftBlocks[block].NotNullDc = 0;
+                }
+
+                c.AboveBlocksIdx[0] = 1;
+                c.AboveBlocksIdx[1] = 2;
+                c.AboveBlocksIdx[2] = 1;
+                c.AboveBlocksIdx[3] = 2;
+                c.AboveBlocksIdx[4] = 2 * m_hfrags + 2 + 1;
+                c.AboveBlocksIdx[5] = 3 * m_hfrags + 4 + 1;
+
+                //calculate the pixeloffset for each block
+                BlockOffset[0] = (int)(m_vfrags * c.YStride * 16);      //UPPER LEFT
+                BlockOffset[1] = BlockOffset[0] + 8;                    //UPPER RIGHT
+                BlockOffset[2] = (int)(BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
+                BlockOffset[3] = BlockOffset[2] + 8;                    //LOWER RIGHT
+                BlockOffset[4] = (int)(m_vfrags * 8 * c.UvStride);      //OFFSET IN U PLANE
+                BlockOffset[5] = BlockOffset[4];                        //OFFSET IN V PLANE
+            }
+
+           
         }
 
         private void ParseCoeffModels(Context c)
         {
-            int[] DefaultProbe = new int[11];
+            int[] DefaultProb = new int[11];
 
-            for(int i=0;i<DefaultProbe.Length;++i)
-                DefaultProbe[i] = 0x80;
+            for(int i=0;i<DefaultProb.Length;++i)
+                DefaultProb[i] = 0x80;
 
             for(int pt=0;pt<2;++pt)
             {
                 for(int node=0;node<11;++node)
                 {
-                    if(c.RangeDec.GetBitProbability(RangeDecoder.DccvPct[pt,node])>0)
+                    if(c.RangeDec.GetBitProbability(Data.DccvPct[pt,node])>0)
                     {
-
+                        DefaultProb[node] = c.RangeDec.ReadBitsNn(7);
+                        c.Model.CoeffDccv[pt,node] = (byte)DefaultProb[node];
+                    }
+                    else if(m_type==FrameType.INTRA)
+                    {
+                        c.Model.CoeffDccv[pt, node] = (byte)DefaultProb[node];
                     }
                 }
+            }
+
+            if(Convert.ToBoolean(c.RangeDec.ReadBit()))
+            {
+                for(int pos=1;pos<64;++pos)
+                {
+                    if (c.RangeDec.GetBitProbability(Data.CoeffReorderPct[pos]) > 0)
+                    {
+                        c.Model.CoeffReorder[pos] = (byte)c.RangeDec.ReadBits(4);
+                    }
+                }
+
+                c.Model.InitializeCoeffOrderTable();
+            }
+
+            for(int cg=0;cg<2;++cg)
+            {
+                for(int node=0;node<14;++node)
+                {
+                    if(c.RangeDec.GetBitProbability(Data.RunvPct[cg,node]) > 0)
+                    {
+                        c.Model.CoeffRunv[cg,node] = (byte)c.RangeDec.ReadBitsNn(7); 
+                    }
+                }
+            }
+
+            for (int ct = 0; ct < 3; ct++)
+            {
+                for (int pt = 0; pt < 2; pt++)
+                {
+                    for (int cg = 0; cg < 6; cg++)
+                    {
+                        for (int node = 0; node < 11; node++)
+                        {
+                            if (c.RangeDec.GetBitProbability(Data.RactPct[ct, pt, cg, node]) > 0)
+                            {
+                                DefaultProb[node] = c.RangeDec.ReadBitsNn(7);
+                                c.Model.CoeffRact[pt, ct, cg, node] = (byte)DefaultProb[node];
+                            }
+                            else if (m_type==FrameType.INTRA)
+                            {
+                                c.Model.CoeffRact[pt, ct, cg, node] = (byte)DefaultProb[node];
+                            }
+                        }                         
+                    }                      
+                }                  
+            }
+            
+            if(m_useHuffman)
+            {
+                
+            }
+            else
+            {
+                //Calculate DCCT
+                for (int pt = 0; pt < 2; pt++)
+                    for (int ctx = 0; ctx < 3; ctx++)
+                        for (int node = 0; node < 5; node++)
+                            c.Model.CoeffDcct[pt,ctx,node] = (byte)Util.Clip(((c.Model.CoeffDccv[pt,node] * Data.DccvLc[ctx,node,0] + 128) >> 8) + Data.DccvLc[ctx,node,1], 1, 255);
             }
         }
 
         public FrameType Type { get => m_type; set => m_type = value; }
         public bool IsGolden { get => m_isGolden; set => m_isGolden = value; }
+        public int[] BlockOffset { get => m_blockOffset; set => m_blockOffset = value; }
+        public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
     }
 }

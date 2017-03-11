@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace sage.vp6
 {
@@ -12,11 +13,9 @@ namespace sage.vp6
         private uint m_numerator;
         private uint m_framecount;
         private StreamType m_type;
-        
+
         //REQUIRED FOR DECODING 
-        private Frame m_golden;
-        private Frame m_previous;
-        private Frame m_current;
+        private Frame[] m_frames;
         private Model m_model;
         private RangeDecoder m_rangeDec;
         private RangeDecoder m_huffDec;
@@ -24,8 +23,18 @@ namespace sage.vp6
         private bool m_useLoopFiltering;
         private bool m_loopFilterSelector;
         private Format m_format;
-        private bool m_useHuffman;
         private Macroblock[] m_macroblocks;
+        private Reference[] m_aboveBlocks;
+        private Reference[] m_leftBlocks;
+        private int[] m_aboveBlocksIdx;
+
+        //REQUIRED for prediction
+        private short[,] m_prevDc;
+        //Information regarding the frames
+        private uint m_yStride;
+        private uint m_uvStride;
+        private uint m_ySize;
+        private uint m_uvSize;
 
         public Context(uint width, uint height, uint denominator, uint numerator,
             uint framecount, StreamType type)
@@ -36,7 +45,11 @@ namespace sage.vp6
             Numerator = numerator;
             Framecount = framecount;
             Type = type;
+            Frames = new Frame[3];
+            LeftBlocks = new Reference[4];
             Model = new Model();
+            PrevDc = new short[3, 3];
+            AboveBlocksIdx = new int[6];
         }
 
         /// <summary>
@@ -50,7 +63,7 @@ namespace sage.vp6
 
         public void ProcessPacket(BinaryReader br, int packet_size)
         {
-            m_previous = m_current;
+            Frames[FrameSelect.PREVIOUS] = Frames[FrameSelect.CURRENT];
             //Substract the first 8 bytes that have already been read
             byte[] buffer = br.ReadBytes(packet_size - 8);
             
@@ -63,10 +76,10 @@ namespace sage.vp6
             //This is a golden frame, so update it
             if (frame.IsGolden)
             {
-                m_golden = frame;
+                Frames[FrameSelect.GOLDEN] = frame;
             }
 
-            m_current = frame;
+            Frames[FrameSelect.CURRENT] = frame;
         }
 
         public uint Width { get => m_width; set => m_width = value; }
@@ -80,9 +93,17 @@ namespace sage.vp6
         public bool UseLoopFiltering { get => m_useLoopFiltering; set => m_useLoopFiltering = value; }
         public bool LoopFilterSelector { get => m_loopFilterSelector; set => m_loopFilterSelector = value; }
         public Format Format { get => m_format; set => m_format = value; }
-        public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
         internal RangeDecoder HuffDec { get => m_huffDec; set => m_huffDec = value; }
         internal Model Model { get => m_model; set => m_model = value; }
         internal Macroblock[] Macroblocks { get => m_macroblocks; set => m_macroblocks = value; }
+        public short[,] PrevDc { get => m_prevDc; set => m_prevDc = value; }
+        internal Frame[] Frames { get => m_frames; set => m_frames = value; }
+        internal Reference[] AboveBlocks { get => m_aboveBlocks; set => m_aboveBlocks = value; }
+        public uint YStride { get => m_yStride; set => m_yStride = value; }
+        public uint UvStride { get => m_uvStride; set => m_uvStride = value; }
+        public uint YSize { get => m_ySize; set => m_ySize = value; }
+        public uint UvSize { get => m_uvSize; set => m_uvSize = value; }
+        internal Reference[] LeftBlocks { get => m_leftBlocks; set => m_leftBlocks = value; }
+        public int[] AboveBlocksIdx { get => m_aboveBlocksIdx; set => m_aboveBlocksIdx = value; }
     }
 }
