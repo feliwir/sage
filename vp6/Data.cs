@@ -8,6 +8,8 @@ namespace sage.vp6
     {
         internal static readonly byte[] B6To4 = new byte[6] { 0, 0, 1, 1, 2, 3 };
 
+        internal static readonly byte[] B2p = new byte[]{ 0, 0, 0, 0, 1, 2, 3, 3, 3, 3 };
+
         internal static readonly byte[] NormShift = new byte[256] {
             8,7,6,6,5,5,5,5,4,4,4,4,4,4,4,4,
             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
@@ -119,6 +121,74 @@ namespace sage.vp6
             FrameSelect.PREVIOUS,  /* VP56_MB_INTER_4V */
             FrameSelect.GOLDEN,    /* VP56_MB_INTER_V1_GF */
             FrameSelect.GOLDEN,    /* VP56_MB_INTER_V2_GF */
+        };
+
+        internal static readonly Tree[] PvaTree = new Tree[]{
+            new Tree( 8, 0),
+            new Tree( 4, 1),
+            new Tree( 2, 2), new Tree(-0), new Tree(-1),
+            new Tree( 2, 3), new Tree(-2), new Tree(-3),
+            new Tree( 4, 4),
+            new Tree( 2, 5), new Tree(-4), new Tree(-5),
+            new Tree( 2, 6), new Tree(-6), new Tree(-7),
+        };
+
+        internal static readonly Tree[] PcTree = new Tree[]{
+            new Tree( 4, 6),
+            new Tree( 2, 7), new Tree(-0), new Tree(-1),
+            new Tree( 4, 8),
+            new Tree( 2, 9), new Tree(-2), new Tree(-3),
+            new Tree( 2,10), new Tree(-4), new Tree(-5),
+        };
+
+        internal static readonly Tree[] PcrTree =  new Tree[] {
+            new Tree( 8, 0),
+            new Tree( 4, 1),
+            new Tree( 2, 2), new Tree(-1), new Tree(-2),
+            new Tree( 2, 3), new Tree(-3), new Tree(-4),
+            new Tree( 8, 4),
+            new Tree( 4, 5),
+            new Tree( 2, 6), new Tree(-5), new Tree(-6),
+            new Tree( 2, 7), new Tree(-7), new Tree(-8),
+                     new Tree(-0),
+        };
+
+        internal static readonly byte[] CoeffBias = new byte[] {
+            0, 1, 2, 3, 4, 5, 7, 11, 19, 35, 67 };
+
+        internal static readonly byte[] CoeffBitLength = new byte[] { 0, 1, 2, 3, 4, 10 };
+
+        internal static readonly byte[,] CoeffParseTable = new byte[6,11] {
+            { 159,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0 },
+            { 145, 165,   0,   0,   0,   0,   0,   0,   0,   0,   0 },
+            { 140, 148, 173,   0,   0,   0,   0,   0,   0,   0,   0 },
+            { 135, 140, 155, 176,   0,   0,   0,   0,   0,   0,   0 },
+            { 130, 134, 141, 157, 180,   0,   0,   0,   0,   0,   0 },
+            { 129, 130, 133, 140, 153, 177, 196, 230, 243, 254, 254 },
+        };
+
+        internal static readonly byte[] ZigZag = new byte[64] {
+            0,   1,  8, 16,  9,  2,  3, 10,
+            17, 24, 32, 25, 18, 11,  4,  5,
+            12, 19, 26, 33, 40, 48, 41, 34,
+            27, 20, 13,  6,  7, 14, 21, 28,
+            35, 42, 49, 56, 57, 50, 43, 36,
+            29, 22, 15, 23, 30, 37, 44, 51,
+            58, 59, 52, 45, 38, 31, 39, 46,
+            53, 60, 61, 54, 47, 55, 62, 63
+        };
+
+        internal static readonly byte[] Scantable = Util.Transpose(ZigZag);
+
+        internal static readonly byte[] CoeffGroups = new byte[64] {
+            0, 0, 1, 1, 1, 2, 2, 2,
+            2, 2, 2, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 4, 4,
+            4, 4, 4, 4, 4, 4, 4, 4,
+            4, 4, 4, 4, 4, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5,
         };
     }
 }

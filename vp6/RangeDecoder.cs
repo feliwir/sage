@@ -12,15 +12,15 @@ namespace sage.vp6
         int m_bits;
         uint m_codeword;
 
-        public RangeDecoder(byte[] buffer,int startpos)
+        public RangeDecoder(byte[] buffer, int startpos)
         {
             m_index = 0;
             m_high = 255;
             m_bits = -16;
             m_startpos = startpos;
             m_buffer = buffer;
-            m_codeword = (uint)(m_buffer[m_startpos+m_index++] << 16);
-            m_codeword |= (uint)(m_buffer[m_startpos+m_index++] << 8);
+            m_codeword = (uint)(m_buffer[m_startpos + m_index++] << 16);
+            m_codeword |= (uint)(m_buffer[m_startpos + m_index++] << 8);
             m_codeword |= (uint)(m_buffer[m_startpos + m_index++]);
         }
 
@@ -34,7 +34,7 @@ namespace sage.vp6
         {
             int value = 0;
 
-            while(bits>0)
+            while (bits > 0)
             {
                 value = (value << 1) | ReadBit();
                 --bits;
@@ -50,13 +50,13 @@ namespace sage.vp6
             uint low_shift = (uint)low << 16;
 
             bool bit = codeword >= low_shift;
-            if (bit) 
+            if (bit)
             {
-                m_high  -= (byte)low;
+                m_high -= (byte)low;
                 codeword -= low_shift;
-            } 
-            else 
-            {           
+            }
+            else
+            {
                 m_high = (byte)low;
             }
 
@@ -64,13 +64,18 @@ namespace sage.vp6
             return Convert.ToInt32(bit);
         }
 
-        public int GetBitProbability(int prob)
+        /// <summary>
+        /// This function is used if there occurs branching when the bit is true
+        /// </summary>
+        /// <param name="prob">the probability</param>
+        /// <returns></returns>
+        public int GetBitProbabilityBranch(int prob)
         {
             uint codeword = Renormalize();
             uint low = (uint)(1 + (((m_high - 1) * prob) >> 8));
             uint low_shift = low << 16;
 
-            if(codeword>= low_shift)
+            if (codeword >= low_shift)
             {
                 m_high -= (int)low;
                 m_codeword = codeword - low_shift;
@@ -80,6 +85,24 @@ namespace sage.vp6
             m_codeword = codeword;
             m_high = (int)low;
             return 0;
+        }
+
+        /// <summary>
+        /// This function gets the probability for the bitstream
+        /// </summary>
+        /// <param name="prob"></param>
+        /// <returns></returns>
+        public int GetBitProbability(int prob)
+        {
+            uint codeword = Renormalize();
+            uint low = (uint)(1 + (((m_high - 1) * prob) >> 8));
+            uint low_shift = low << 16;
+            int bit = Convert.ToInt32(codeword >= low_shift);
+
+            m_high = (int)(bit>0 ? m_high - low : low);
+            m_codeword = bit>0 ? codeword - low_shift : codeword;
+
+            return bit;
         }
 
         private uint Renormalize()
@@ -92,22 +115,50 @@ namespace sage.vp6
             codeword <<= shift;
             bits += shift;
 
-            if(bits >= 0 && (m_startpos+m_index)<m_buffer.Length)
+            if (bits >= 0 && (m_startpos + m_index)+1 < m_buffer.Length)
             {
                 tmp |= (uint)(m_buffer[m_startpos + m_index++] << 8);
                 tmp |= (uint)(m_buffer[m_startpos + m_index++]);
                 codeword |= tmp << bits;
-                bits-=16;
+                bits -= 16;
             }
             m_bits = bits;
             return codeword;
-        }     
+        }
+
+        public int GetTree(Tree[] tree,byte[] probs)
+        {
+            int index = 0;
+            while(tree[index].Value>0)
+            {
+                if(GetBitProbabilityBranch(probs[tree[index].ProbIdx])>0)
+                {
+                    index += tree[index].Value;
+                }
+                else
+                {
+                    index++;
+                }
+            }
+
+            return -tree[index].Value;
+        }
     }
 
     internal struct Tree
     {
         sbyte m_value;
         sbyte m_probIdx;
+
+        public Tree(sbyte value,sbyte probIdx)
+        {
+            m_value = value;
+            m_probIdx = probIdx;
+        }
+
+        public Tree(sbyte value) :this(value,0)
+        {          
+        }
 
         public sbyte Value { get => m_value; set => m_value = value; }
         public sbyte ProbIdx { get => m_probIdx; set => m_probIdx = value; }

@@ -58,6 +58,8 @@ namespace sage.vp6
         private int[] m_blockOffset;
         private bool m_useHuffman;
 
+        private short[] m_planes;
+
         //Scaling mode
         ScalingMode m_scaling;
 
@@ -65,6 +67,7 @@ namespace sage.vp6
         public Frame(byte[] buf,Context c)
         {
             int index = 0;
+            m_planes = new short[4];
             m_blockOffset = new int[6];
             m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
@@ -159,7 +162,18 @@ namespace sage.vp6
 
             if(m_coeffOffset>0)
             {
-                c.HuffDec = new RangeDecoder(buf, m_coeffOffset);
+                if (m_useHuffman)
+                {
+
+                }
+                else
+                {
+                    c.CoeffDec = new RangeDecoder(buf, m_coeffOffset);
+                }
+            }
+            else
+            {
+                c.CoeffDec = c.RangeDec;
             }
         }
 
@@ -234,7 +248,7 @@ namespace sage.vp6
         private void DecodeMacroblock(Context c,int row,int column)
         {
             CodingMode mode;
-            int ref_frame;
+            int ref_frame,ab,b_max;
             if (m_type==FrameType.INTRA)
             {
                 mode = CodingMode.INTRA;
@@ -246,7 +260,13 @@ namespace sage.vp6
 
             ref_frame = Data.ReferenceFrame[(int)mode];
 
-            c.ParseCoefficients();
+            c.ParseCoefficients(m_dequant_ac);
+
+            c.AddPredictorsDc(ref_frame, m_dequant_dc);
+
+            Frame frame_ref = c.Frames[ref_frame];
+
+            //TODO: work here
         }
 
         static private int GetVectorPredictors(Context c, int row, int column, int ref_frame)
@@ -313,7 +333,7 @@ namespace sage.vp6
             {
                 for(int node=0;node<11;++node)
                 {
-                    if(c.RangeDec.GetBitProbability(Data.DccvPct[pt,node])>0)
+                    if(c.RangeDec.GetBitProbabilityBranch(Data.DccvPct[pt,node])>0)
                     {
                         DefaultProb[node] = c.RangeDec.ReadBitsNn(7);
                         c.Model.CoeffDccv[pt,node] = (byte)DefaultProb[node];
@@ -329,7 +349,7 @@ namespace sage.vp6
             {
                 for(int pos=1;pos<64;++pos)
                 {
-                    if (c.RangeDec.GetBitProbability(Data.CoeffReorderPct[pos]) > 0)
+                    if (c.RangeDec.GetBitProbabilityBranch(Data.CoeffReorderPct[pos]) > 0)
                     {
                         c.Model.CoeffReorder[pos] = (byte)c.RangeDec.ReadBits(4);
                     }
@@ -342,7 +362,7 @@ namespace sage.vp6
             {
                 for(int node=0;node<14;++node)
                 {
-                    if(c.RangeDec.GetBitProbability(Data.RunvPct[cg,node]) > 0)
+                    if(c.RangeDec.GetBitProbabilityBranch(Data.RunvPct[cg,node]) > 0)
                     {
                         c.Model.CoeffRunv[cg,node] = (byte)c.RangeDec.ReadBitsNn(7); 
                     }
@@ -357,7 +377,7 @@ namespace sage.vp6
                     {
                         for (int node = 0; node < 11; node++)
                         {
-                            if (c.RangeDec.GetBitProbability(Data.RactPct[ct, pt, cg, node]) > 0)
+                            if (c.RangeDec.GetBitProbabilityBranch(Data.RactPct[ct, pt, cg, node]) > 0)
                             {
                                 DefaultProb[node] = c.RangeDec.ReadBitsNn(7);
                                 c.Model.CoeffRact[pt, ct, cg, node] = (byte)DefaultProb[node];

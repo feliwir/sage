@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace sage.vp6
@@ -20,7 +21,7 @@ namespace sage.vp6
         private Frame[] m_frames;
         private Model m_model;
         private RangeDecoder m_rangeDec;
-        private RangeDecoder m_huffDec;
+        private RangeDecoder m_coeffDec;
         private Profile m_profile;
         private bool m_useLoopFiltering;
         private bool m_loopFilterSelector;
@@ -31,6 +32,7 @@ namespace sage.vp6
         private int[] m_aboveBlocksIdx;
         private int m_vectorCandidatePos;
         private Motionvector[] m_vectorCandidate;
+        private short[,] m_blockCoeff;
         //REQUIRED for prediction
         private short[,] m_prevDc;
         //Information regarding the frames
@@ -54,6 +56,7 @@ namespace sage.vp6
             PrevDc = new short[3, 3];
             AboveBlocksIdx = new int[6];
             VectorCandidate = new Motionvector[2];
+            BlockCoeff = new short[6, 64];
         }
 
         /// <summary>
@@ -86,12 +89,13 @@ namespace sage.vp6
             Frames[FrameSelect.CURRENT] = frame;
         }
 
-        public void ParseCoefficients()
+        public void ParseCoefficients(int dequant_ac)
         {
-            int ctx,coeff_index;
-            int pt = 0;
-            byte[] model1, model2;
-            for(int b=0;b<6;++b)
+            int ctx,coeff, coeff_index,idx;
+            int pt = 0,sign,cg;
+            byte[] model1, model2,model3;
+
+            for (int b=0;b<6;++b)
             {
                 //codetyps
                 int ct = 1;
@@ -107,17 +111,109 @@ namespace sage.vp6
                 coeff_index = 0;
                 for(;;)
                 {
-                    if((coeff_index>1 && ct==0)|| RangeDec.GetBitProbability(model2[0])>0)
+                    if((coeff_index>1 && ct==0)|| CoeffDec.GetBitProbabilityBranch(model2[0])>0)
                     {
-                        if(RangeDec.GetBitProbability(model2[2])>0)
+                        //Parse a coefficient
+                        if(CoeffDec.GetBitProbabilityBranch(model2[2])>0)
                         {
-                            if (RangeDec.GetBitProbability(model2[3]) > 0)
+                            if (CoeffDec.GetBitProbabilityBranch(model2[3]) > 0)
                             {
+                                idx = CoeffDec.GetTree(Data.PcTree, model1);
+                                coeff = Data.CoeffBias[idx + 5];
+                                for (int i = Data.CoeffBitLength[idx]; i >= 0; --i)
+                                    coeff += CoeffDec.GetBitProbability(Data.CoeffParseTable[idx, i]) << i;
+                            }
+                            else
+                            {
+                                if (CoeffDec.GetBitProbabilityBranch(model2[4]) > 0)
+                                    coeff = 3 + CoeffDec.GetBitProbability(model1[5]);
+                                else
+                                    coeff = 2;
+                            }
 
+                            ct = 2;
+                        }
+                        else
+                        {
+                            ct = 1;
+                            coeff = 1;
+                        }
+
+                        sign = CoeffDec.ReadBit();
+                        coeff = (coeff ^ -sign) + sign;
+                        if (coeff_index>0)
+                            coeff *= dequant_ac;
+
+                        idx = Model.CoeffIndexToPos[coeff_index];
+                        BlockCoeff[b, Data.Scantable[idx]] = (short)coeff;
+                        run = 1;
+                    }
+                    //Parse a run
+                    else
+                    {
+                        ct = 0;
+                        if(coeff_index>0)
+                        {
+                            if (CoeffDec.GetBitProbabilityBranch(model2[1]) <= 0)
+                                break;
+
+                            model3 = Util.GetSlice(Model.CoeffRunv,Convert.ToInt32(coeff_index>=6));
+                            run = CoeffDec.GetTree(Data.PcrTree, model3);
+                            if(run<=0)
+                            {
+                                run = 9;
+                                for (int i=0;i<6;++i)
+                                {
+                                    run += CoeffDec.GetBitProbability(model3[i + 8])<<i;
+                                }
                             }
                         }
                     }
+
+                    coeff_index += run;
+                    if (coeff_index >= 64)
+                        break;
+
+                    cg = Data.CoeffGroups[coeff_index];
+                    model1 = model2 = Util.GetSlice(Model.CoeffRact,pt,ct,cg);
                 }
+                LeftBlocks[Data.B6To4[b]].NotNullDc = AboveBlocks[AboveBlocksIdx[b]].NotNullDc = Convert.ToByte(BlockCoeff[b,0]>0);
+            }
+        }
+
+        public void AddPredictorsDc(int ref_frame,int dequant_dc)
+        {
+            int idx = Data.Scantable[0];
+
+            for(int b=0;b<6;++b)
+            {
+                Reference ab = AboveBlocks[AboveBlocksIdx[b]];
+                Reference lb = LeftBlocks[Data.B6To4[b]];
+
+                int count = 0, dc=0;
+
+                if(ref_frame==lb.RefFrame)
+                {
+                    dc += lb.DcCoeff;
+                    count++;
+                }
+                if(ref_frame==ab.RefFrame)
+                {
+                    dc += ab.DcCoeff;
+                    count++;
+                }
+                if (count == 0)
+                    dc = PrevDc[Data.B2p[b], ref_frame];
+                else if (count == 2)
+                    dc /= 2;
+
+                BlockCoeff[b, idx] += (short)dc;
+                PrevDc[Data.B2p[b], ref_frame] = BlockCoeff[b, idx];
+                ab.DcCoeff = BlockCoeff[b, idx];
+                ab.RefFrame = ref_frame;
+                lb.DcCoeff = BlockCoeff[b, idx];
+                lb.RefFrame = ref_frame;
+                BlockCoeff[b, idx] *= (short)dequant_dc;
             }
         }
 
@@ -132,7 +228,6 @@ namespace sage.vp6
         public bool UseLoopFiltering { get => m_useLoopFiltering; set => m_useLoopFiltering = value; }
         public bool LoopFilterSelector { get => m_loopFilterSelector; set => m_loopFilterSelector = value; }
         public Format Format { get => m_format; set => m_format = value; }
-        internal RangeDecoder HuffDec { get => m_huffDec; set => m_huffDec = value; }
         internal Model Model { get => m_model; set => m_model = value; }
         internal Macroblock[] Macroblocks { get => m_macroblocks; set => m_macroblocks = value; }
         public short[,] PrevDc { get => m_prevDc; set => m_prevDc = value; }
@@ -148,5 +243,7 @@ namespace sage.vp6
         public uint MbHeight { get => m_mbHeight; set => m_mbHeight = value; }
         public int VectorCandidatePos { get => m_vectorCandidatePos; set => m_vectorCandidatePos = value; }
         internal Motionvector[] VectorCandidate { get => m_vectorCandidate; set => m_vectorCandidate = value; }
+        public short[,] BlockCoeff { get => m_blockCoeff; set => m_blockCoeff = value; }
+        internal RangeDecoder CoeffDec { get => m_coeffDec; set => m_coeffDec = value; }
     }
 }
