@@ -35,6 +35,9 @@ namespace sage.vp6
         private Motionvector[] m_mvs;
         private Motionvector[] m_vectorCandidate;
         private short[,] m_blockCoeff;
+        private IDCT m_idct;
+        private int[] m_blockOffset;
+
         //REQUIRED for prediction
         private short[,] m_prevDc;
         //Information regarding the frames
@@ -60,6 +63,8 @@ namespace sage.vp6
             AboveBlocksIdx = new int[6];
             VectorCandidate = new Motionvector[2];
             BlockCoeff = new short[6, 64];
+            BlockOffset = new int[6];
+            Idct = new IDCT();
         }
 
         /// <summary>
@@ -108,8 +113,8 @@ namespace sage.vp6
                     pt = 1;
 
                 ctx = LeftBlocks[Data.B6To4[b]].NotNullDc + AboveBlocks[AboveBlocksIdx[b]].NotNullDc;
-                model1 = Util.GetSlice(Model.CoeffDccv,pt);
-                model2 = Util.GetSlice(Model.CoeffDcct, pt, ctx);
+                model1 = Util.GetSlice<byte>(Model.CoeffDccv, pt);
+                model2 = Util.GetSlice<byte>(Model.CoeffDcct, pt, ctx);
 
                 coeff_index = 0;
                 for(;;)
@@ -250,5 +255,7 @@ namespace sage.vp6
         internal RangeDecoder CoeffDec { get => m_coeffDec; set => m_coeffDec = value; }
         public CodingMode MacroblockType { get => m_macroblockType; set => m_macroblockType = value; }
         internal Motionvector[] Mvs { get => m_mvs; set => m_mvs = value; }
+        internal IDCT Idct { get => m_idct; set => m_idct = value; }
+        public int[] BlockOffset { get => m_blockOffset; set => m_blockOffset = value; }
     }
 }

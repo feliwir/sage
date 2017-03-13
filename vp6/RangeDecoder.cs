@@ -6,7 +6,6 @@ namespace sage.vp6
     {
         int m_startpos;
         int m_index;
-        int m_bit;
         byte[] m_buffer;
         int m_high;
         int m_bits;

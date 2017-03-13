@@ -56,7 +56,6 @@ namespace sage.vp6
         private int m_presX;
         private int m_presY;
 
-        private int[] m_blockOffset;
         private bool m_useHuffman;
 
         private List<byte[]> m_planes;
@@ -68,7 +67,7 @@ namespace sage.vp6
         public Frame(byte[] buf,Context c)
         {
             int index = 0;
-            m_blockOffset = new int[6];
+            
             m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
 
@@ -237,16 +236,28 @@ namespace sage.vp6
                 c.AboveBlocksIdx[5] = 3 * (int)c.MbWidth + 4 + 1;
 
                 //calculate the pixeloffset for each block
-                BlockOffset[0] = (int)(row * c.YStride * 16);           //UPPER LEFT
-                BlockOffset[1] = BlockOffset[0] + 8;                    //UPPER RIGHT
-                BlockOffset[2] = (int)(BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
-                BlockOffset[3] = BlockOffset[2] + 8;                    //LOWER RIGHT
-                BlockOffset[4] = (int)(row * 8 * c.UvStride);           //OFFSET IN U PLANE
-                BlockOffset[5] = BlockOffset[4];                        //OFFSET IN V PLANE
+                c.BlockOffset[0] = (int)(row * c.YStride * 16);             //UPPER LEFT
+                c.BlockOffset[1] = c.BlockOffset[0] + 8;                    //UPPER RIGHT
+                c.BlockOffset[2] = (int)(c.BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
+                c.BlockOffset[3] = c.BlockOffset[2] + 8;                    //LOWER RIGHT
+                c.BlockOffset[4] = (int)(row * 8 * c.UvStride);             //OFFSET IN U PLANE
+                c.BlockOffset[5] = c.BlockOffset[4];                        //OFFSET IN V PLANE
 
                 for(int column=0;column<c.MbWidth;++column)
                 {
                     DecodeMacroblock(c, row, column);
+
+                    for (int y = 0; y < 4; y++)
+                    {
+                        c.AboveBlocksIdx[y] += 2;
+                        c.BlockOffset[y] += 16;
+                    }
+
+                    for (int uv = 4; uv < 6; uv++)
+                    {
+                        c.AboveBlocksIdx[uv] += 1;
+                        c.BlockOffset[uv] += 8;
+                    }
                 }
             }          
         }
@@ -262,10 +273,6 @@ namespace sage.vp6
             else
             {
                 mode = DecodeMotionvector(c, row, column);
-                if (mode != CodingMode.INTER_MV)
-                {
-                    int a = 0;
-                }
             }
 
             c.ParseCoefficients(m_dequant_ac);
@@ -293,12 +300,15 @@ namespace sage.vp6
                 case CodingMode.INTRA:
                     for(b=0;b<b_max;++b)
                     {
+                        short[] slice = Util.GetSlice(c.BlockCoeff, b);
                         plane = Data.B2p[b];
+                        c.Idct.Put(Planes[plane], c.BlockOffset[b],c.YStride,slice,1);
                     }
                     break;
                 default:
                     break;
             }
+
         }
 
         static private int GetVectorPredictors(Context c, int row, int column, int ref_frame)
@@ -530,7 +540,6 @@ namespace sage.vp6
 
         public FrameType Type { get => m_type; set => m_type = value; }
         public bool IsGolden { get => m_isGolden; set => m_isGolden = value; }
-        public int[] BlockOffset { get => m_blockOffset; set => m_blockOffset = value; }
         public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
         public List<byte[]> Planes { get => m_planes; set => m_planes = value; }
     }
