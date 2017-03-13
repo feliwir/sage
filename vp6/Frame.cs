@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace sage.vp6
@@ -58,7 +59,7 @@ namespace sage.vp6
         private int[] m_blockOffset;
         private bool m_useHuffman;
 
-        private short[] m_planes;
+        private List<byte[]> m_planes;
 
         //Scaling mode
         ScalingMode m_scaling;
@@ -67,11 +68,10 @@ namespace sage.vp6
         public Frame(byte[] buf,Context c)
         {
             int index = 0;
-            m_planes = new short[4];
             m_blockOffset = new int[6];
             m_type = (FrameType)((buf[index] >> 7) & 0x01);
             m_quantizer = (buf[index] >> 1) & 0x3F;
-            
+
             //Get the quantizer values
             m_dequant_ac = Dequantizer.AC[m_quantizer] << 2;
             m_dequant_dc = Dequantizer.DC[m_quantizer] << 2;
@@ -144,6 +144,7 @@ namespace sage.vp6
 
                     c.RangeDec = new RangeDecoder(buf, index);
                     m_isGolden = Convert.ToBoolean(c.RangeDec.ReadBit());
+
                     if(c.Profile==Profile.ADVANCED)
                     {
                         c.UseLoopFiltering = Convert.ToBoolean(c.RangeDec.ReadBit());
@@ -175,11 +176,16 @@ namespace sage.vp6
             {
                 c.CoeffDec = c.RangeDec;
             }
+
+            Planes = new List<byte[]>() { new byte[c.Width*c.Height],
+                                            new byte[c.Width*c.Height],
+                                            new byte[c.Width*c.Height]};
+        
+            
         }
 
         public void Decode(Context c)
         {
-
             if(m_type==FrameType.INTRA)
             {
                 c.Model.Default();
@@ -191,7 +197,7 @@ namespace sage.vp6
             }
             else
             {
-                
+                c.MacroblockType = CodingMode.INTER_MV;
             }
 
             ParseCoeffModels(c);
@@ -231,11 +237,11 @@ namespace sage.vp6
                 c.AboveBlocksIdx[5] = 3 * (int)c.MbWidth + 4 + 1;
 
                 //calculate the pixeloffset for each block
-                BlockOffset[0] = (int)(row * c.YStride * 16);      //UPPER LEFT
+                BlockOffset[0] = (int)(row * c.YStride * 16);           //UPPER LEFT
                 BlockOffset[1] = BlockOffset[0] + 8;                    //UPPER RIGHT
                 BlockOffset[2] = (int)(BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
                 BlockOffset[3] = BlockOffset[2] + 8;                    //LOWER RIGHT
-                BlockOffset[4] = (int)(row * 8 * c.UvStride);      //OFFSET IN U PLANE
+                BlockOffset[4] = (int)(row * 8 * c.UvStride);           //OFFSET IN U PLANE
                 BlockOffset[5] = BlockOffset[4];                        //OFFSET IN V PLANE
 
                 for(int column=0;column<c.MbWidth;++column)
@@ -248,7 +254,7 @@ namespace sage.vp6
         private void DecodeMacroblock(Context c,int row,int column)
         {
             CodingMode mode;
-            int ref_frame,ab,b_max;
+            
             if (m_type==FrameType.INTRA)
             {
                 mode = CodingMode.INTRA;
@@ -256,17 +262,43 @@ namespace sage.vp6
             else
             {
                 mode = DecodeMotionvector(c, row, column);
+                if (mode != CodingMode.INTER_MV)
+                {
+                    int a = 0;
+                }
             }
 
-            ref_frame = Data.ReferenceFrame[(int)mode];
-
             c.ParseCoefficients(m_dequant_ac);
+
+            //TODO: work here
+            RenderMacroblock(c, mode);
+        }
+
+        private void RenderMacroblock(Context c, CodingMode mode)
+        {
+            int ref_frame, ab, b_max,b;
+            int plane;
+            ref_frame = Data.ReferenceFrame[(int)mode];
 
             c.AddPredictorsDc(ref_frame, m_dequant_dc);
 
             Frame frame_ref = c.Frames[ref_frame];
 
-            //TODO: work here
+            //TODO: add profile for alpha
+            ab = 6;
+            b_max = 6;
+
+            switch(mode)
+            {
+                case CodingMode.INTRA:
+                    for(b=0;b<b_max;++b)
+                    {
+                        plane = Data.B2p[b];
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
 
         static private int GetVectorPredictors(Context c, int row, int column, int ref_frame)
@@ -309,17 +341,108 @@ namespace sage.vp6
             }
 
             c.VectorCandidate = vect;
-            return nb_preds;
+
+            return nb_preds +1;
+        }
+
+        private CodingMode ParseMacroblockType(Context c, int ctx)
+        {
+            byte[] mb_type_model = Util.GetSlice(c.Model.MacroblockType, ctx, (int)c.MacroblockType);
+            var rd = c.RangeDec;
+            if (rd.GetBitProbabilityBranch(mb_type_model[0]) > 0)
+            {
+                return c.MacroblockType;
+            }
+            else
+            {
+                return (CodingMode)rd.GetTree(Data.PmbtTree, mb_type_model);
+            }
         }
 
         private CodingMode DecodeMotionvector(Context c,int row,int column)
         {
+            Motionvector mv = new Motionvector();
+            Motionvector vector = new Motionvector(0, 0);
             int ctx = GetVectorPredictors(c, row, column, FrameSelect.PREVIOUS);
 
+            c.MacroblockType = ParseMacroblockType(c, ctx);
+            c.Macroblocks[row * c.MbWidth + column].Type = c.MacroblockType;
 
-            
+            switch(c.MacroblockType)
+            {
+                case CodingMode.INTER_NEAREST_MV:
+                    mv = c.VectorCandidate[0];
+                    break;
+                case CodingMode.INTER_NEAR_MV:
+                    mv = c.VectorCandidate[1];
+                    break;
+                case CodingMode.GOLD_NEAREST_MV:
+                    GetVectorPredictors(c, row, column, FrameSelect.GOLDEN);
+                    mv = c.VectorCandidate[0];
+                    break;
+                case CodingMode.GOLD_NEAR_MV:
+                    GetVectorPredictors(c, row, column, FrameSelect.GOLDEN);
+                    mv = c.VectorCandidate[1];
+                    break;
+                case CodingMode.INTER_PLUS_MV:
+                    ParseVectorAdjustment(c, ref vector);
+                    mv = vector;
+                    break;
+                case CodingMode.GOLDEN_MV:
+                    GetVectorPredictors(c, row, column, FrameSelect.GOLDEN);
+                    ParseVectorAdjustment(c, ref vector);
+                    mv = vector;
+                    break;
+                case CodingMode.INTER_FOURMV:
+                    throw new NotImplementedException("Not done FourMV yet");
+                    break;
+            }
 
-            return CodingMode.INTER_MV;
+            c.Macroblocks[row * c.MbWidth + column].Mv = mv;
+            for (int b = 0; b < 6; ++b)
+                c.Mvs[b] = mv;
+
+            return c.MacroblockType;
+        }
+
+        private void ParseVectorAdjustment(Context c,ref Motionvector vect)
+        {
+            var rd = c.RangeDec;
+            vect = new Motionvector(0, 0);
+            if (c.VectorCandidatePos < 2)
+                vect = c.VectorCandidate[0];
+
+            for(int comp=0;comp<2;++comp)
+            {
+                int delta = 0;
+
+                if(rd.GetBitProbabilityBranch(c.Model.VectorDct[comp])>0)
+                {
+                    byte[] prob_order = new byte[] { 0, 1, 2, 7, 6, 5, 4 };
+                    for(int i=0;i<prob_order.Length;++i)
+                    {
+                        int j = prob_order[i];
+                        delta |= rd.GetBitProbability(c.Model.VectorFdv[comp, j])<<j;
+                    }
+                    if ((delta & 0xF0) > 0)
+                        delta |= rd.GetBitProbability(c.Model.VectorFdv[comp, 3]) << 3;
+                    else
+                        delta |= 8;
+                }
+                else
+                {
+                    byte[] slice = Util.GetSlice(c.Model.VectorPdv, comp);
+                    delta = rd.GetTree(Data.PvaTree, slice);
+                }
+
+                if(Convert.ToBoolean(delta) && rd.GetBitProbabilityBranch(c.Model.VectorSig[comp])>0)
+                    delta = -delta;
+
+                if (comp<=0)
+                    vect.X += delta;
+                else
+                    vect.Y += delta;
+            }
         }
 
         private void ParseCoeffModels(Context c)
@@ -393,7 +516,7 @@ namespace sage.vp6
             
             if(m_useHuffman)
             {
-                
+                //throw new NotImplementedException("Huffman missing");
             }
             else
             {
@@ -409,5 +532,6 @@ namespace sage.vp6
         public bool IsGolden { get => m_isGolden; set => m_isGolden = value; }
         public int[] BlockOffset { get => m_blockOffset; set => m_blockOffset = value; }
         public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
+        public List<byte[]> Planes { get => m_planes; set => m_planes = value; }
     }
 }

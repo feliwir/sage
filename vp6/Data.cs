@@ -190,5 +190,17 @@ namespace sage.vp6
             5, 5, 5, 5, 5, 5, 5, 5,
             5, 5, 5, 5, 5, 5, 5, 5,
         };
+
+        internal static readonly Tree[] PmbtTree = new Tree[] {
+            new Tree( 8, 1),
+            new Tree( 4, 2),
+            new Tree( 2, 4), new Tree(CodingMode.INTER_MV,true), new Tree(CodingMode.INTER_PLUS_MV,true),
+            new Tree( 2, 5), new Tree(CodingMode.INTER_NEAREST_MV,true), new Tree(CodingMode.INTER_NEAR_MV,true),
+            new Tree( 4, 3),
+            new Tree( 2, 6), new Tree(CodingMode.INTRA,true),new Tree(CodingMode.INTER_FOURMV,true),
+            new Tree( 4, 7),
+            new Tree( 2, 8), new Tree(CodingMode.USING_GOLDEN,true), new Tree(CodingMode.GOLDEN_MV,true),
+            new Tree( 2, 9), new Tree(CodingMode.GOLD_NEAREST_MV,true), new Tree(CodingMode.GOLD_NEAR_MV,true),
+        };
     }
 }

@@ -19,6 +19,7 @@ namespace sage.vp6
 
         //REQUIRED FOR DECODING 
         private Frame[] m_frames;
+        private CodingMode m_macroblockType;
         private Model m_model;
         private RangeDecoder m_rangeDec;
         private RangeDecoder m_coeffDec;
@@ -31,6 +32,7 @@ namespace sage.vp6
         private Reference[] m_leftBlocks;
         private int[] m_aboveBlocksIdx;
         private int m_vectorCandidatePos;
+        private Motionvector[] m_mvs;
         private Motionvector[] m_vectorCandidate;
         private short[,] m_blockCoeff;
         //REQUIRED for prediction
@@ -50,6 +52,7 @@ namespace sage.vp6
             Numerator = numerator;
             Framecount = framecount;
             Type = type;
+            Mvs = new Motionvector[6];
             Frames = new Frame[3];
             LeftBlocks = new Reference[4];
             Model = new Model();
@@ -75,13 +78,13 @@ namespace sage.vp6
             byte[] buffer = br.ReadBytes(packet_size - 8);
             
             //One packet is always exactly one frame
-            Frame frame = new Frame(buffer, this);
+            Frame frame = m_frames[FrameSelect.CURRENT] = new Frame(buffer, this);
 
             //Decode this frame
             frame.Decode(this);
 
-            //This is a golden frame, so update it
-            if (frame.IsGolden)
+            //The golden frame is either the last INTRA frame or an INTER frame that was marked as golden frame
+            if (frame.IsGolden||frame.Type==FrameType.INTRA)
             {
                 Frames[FrameSelect.GOLDEN] = frame;
             }
@@ -245,5 +248,7 @@ namespace sage.vp6
         internal Motionvector[] VectorCandidate { get => m_vectorCandidate; set => m_vectorCandidate = value; }
         public short[,] BlockCoeff { get => m_blockCoeff; set => m_blockCoeff = value; }
         internal RangeDecoder CoeffDec { get => m_coeffDec; set => m_coeffDec = value; }
+        public CodingMode MacroblockType { get => m_macroblockType; set => m_macroblockType = value; }
+        internal Motionvector[] Mvs { get => m_mvs; set => m_mvs = value; }
     }
 }

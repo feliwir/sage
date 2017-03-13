@@ -160,6 +160,10 @@ namespace sage.vp6
         {          
         }
 
+        public Tree(CodingMode value,bool neg) : this((sbyte)(neg ?-(sbyte)value:(sbyte)value), 0)
+        {
+        }
+
         public sbyte Value { get => m_value; set => m_value = value; }
         public sbyte ProbIdx { get => m_probIdx; set => m_probIdx = value; }
     }

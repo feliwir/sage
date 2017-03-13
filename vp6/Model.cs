@@ -50,6 +50,7 @@
         private byte[,,,] m_coeffRact = new byte[2, 3, 6, 11];
         private byte[,,] m_coeffDcct = new byte[2, 36, 5];
         private byte[,,] m_defMbTypesStats;
+        private byte[,,] m_mbType = new byte[3,10,10];
 
         public Model()
         {
@@ -62,17 +63,23 @@
         public byte[,] CoeffRunv { get => m_coeffRunv; set => m_coeffRunv = value; }
         public byte[,,,] CoeffRact { get => m_coeffRact; set => m_coeffRact = value; }
         public byte[,,] CoeffDcct { get => m_coeffDcct; set => m_coeffDcct = value; }
+        public byte[,,] MacroblockType { get => m_mbType; set => m_mbType = value; }
+        public byte[] VectorDct { get => m_vectorDct; set => m_vectorDct = value; }
+        public byte[] VectorSig { get => m_vectorSig; set => m_vectorSig = value; }
+        public byte[,] VectorFdv { get => m_vectorFdv; set => m_vectorFdv = value; }
+        public byte[,] VectorPdv { get => m_vectorPdv; set => m_vectorPdv = value; }
+        public byte[,] VectorPdi { get => m_vectorPdi; set => m_vectorPdi = value; }
 
         public void Default()
         {
-            m_vectorDct[0] = 0xA2;
-            m_vectorDct[1] = 0xA4;
-            m_vectorSig[0] = 0x80;
-            m_vectorSig[1] = 0x80;
+            VectorDct[0] = 0xA2;
+            VectorDct[1] = 0xA4;
+            VectorSig[0] = 0x80;
+            VectorSig[1] = 0x80;
 
             m_defMbTypesStats = DefaultMbTypesStats;
-            m_vectorFdv = DefaultVectorFdvModel;
-            m_vectorPdv = DefaultVectorPdvModel;
+            VectorFdv = DefaultVectorFdvModel;
+            VectorPdv = DefaultVectorPdvModel;
             CoeffReorder = DefaultCoeffReorder;
             CoeffRunv = DefaultRunvCoeffModel;
 
