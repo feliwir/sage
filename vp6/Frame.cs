@@ -58,7 +58,11 @@ namespace sage.vp6
 
         private bool m_useHuffman;
 
+        private delegate void ParseCoeff(int dequant_ac);
+        private ParseCoeff m_parseCoeff;     
+
         private List<byte[]> m_planes;
+        private List<int> m_strides;
 
         //Scaling mode
         ScalingMode m_scaling;
@@ -160,11 +164,13 @@ namespace sage.vp6
 
             m_useHuffman = Convert.ToBoolean(c.RangeDec.ReadBit());
 
-            if(m_coeffOffset>0)
+            m_parseCoeff = c.ParseCoefficients;
+
+            if (m_coeffOffset>0)
             {
                 if (m_useHuffman)
                 {
-                    throw new NotImplementedException("Not implemented huffman yet!");
+                    m_parseCoeff = c.ParseCoefficientsHuffman;
                 }
                 else
                 {
@@ -179,8 +185,10 @@ namespace sage.vp6
             Planes = new List<byte[]>() { new byte[c.YSize],
                                             new byte[c.UvSize],
                                             new byte[c.UvSize]};
-        
-            
+
+
+            Strides = new List<int> { -(int)c.YStride, -(int)c.UvStride, -(int)c.UvStride };
+
         }
 
         public void Decode(Context c)
@@ -286,7 +294,7 @@ namespace sage.vp6
                 mode = DecodeMotionvector(c, row, column);
             }
 
-            c.ParseCoefficients(m_dequant_ac);
+            m_parseCoeff(m_dequant_ac);
 
             //TODO: work here
             RenderMacroblock(c, mode);
@@ -313,7 +321,7 @@ namespace sage.vp6
                     {
                         short[] slice = Util.GetSlice(c.BlockCoeff, b);
                         plane = Data.B2p[b];
-                        c.Idct.Put(Planes[plane], c.BlockOffset[b],c.YStride,slice,1);
+                        c.Idct.Put(Planes[plane], c.BlockOffset[b],Strides[plane],slice,1);
                     }
                     break;
                 default:
@@ -553,5 +561,6 @@ namespace sage.vp6
         public bool IsGolden { get => m_isGolden; set => m_isGolden = value; }
         public bool UseHuffman { get => m_useHuffman; set => m_useHuffman = value; }
         public List<byte[]> Planes { get => m_planes; set => m_planes = value; }
+        public List<int> Strides { get => m_strides; set => m_strides = value; }
     }
 }

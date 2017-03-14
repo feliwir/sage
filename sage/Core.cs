@@ -17,7 +17,7 @@ namespace sage
         {
             m_rootDir = root;
 
-            Console.WriteLine("Root directory is:"+ m_rootDir);
+            Console.WriteLine("Root directory is:" + m_rootDir);
             Console.WriteLine("Initializing SAGE...");
 
             //List all big archives in this folder
@@ -28,8 +28,8 @@ namespace sage
             }
 
             //Play all vp6 videos
-            Console.WriteLine("Loading all videos...");            
-            Demuxer vid = new Demuxer(File.Open("F:/Development/Repositories/sage/test/test.vp6", FileMode.Open,FileAccess.Read,FileShare.Read));
+            Console.WriteLine("Loading all videos...");
+            Demuxer vid = new Demuxer(File.Open("F:/Development/Repositories/sage/test/test.vp6", FileMode.Open, FileAccess.Read, FileShare.Read));
             var buf = vid.GetBufferRGB();
 
         }

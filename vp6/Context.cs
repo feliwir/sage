@@ -113,6 +113,11 @@ namespace sage.vp6
             Frames[FrameSelect.CURRENT] = frame;
         }
 
+        public void ParseCoefficientsHuffman(int dequant_ac)
+        {
+
+        }
+
         public void ParseCoefficients(int dequant_ac)
         {
             int ctx,coeff, coeff_index,idx;

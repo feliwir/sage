@@ -21,6 +21,8 @@ namespace sage.vp6
         private readonly int vp60_TAG = MAKE_TAG("vp60");
         private readonly int vp61_TAG = MAKE_TAG("vp61");
 
+
+
         private static int MAKE_TAG(string tag)
         {
             char[] chars = tag.ToCharArray();
@@ -33,9 +35,15 @@ namespace sage.vp6
         private Context m_video;
         private Context m_alpha;
         private int m_fourcc;
+        private uint m_denominator;
+        private uint m_numerator;
+        private double m_fps;
 
         public Context Video { get => m_video; set => m_video = value; }
         public Context Alpha { get => m_alpha; set => m_alpha = value; }
+        public uint Denominator { get => m_denominator; set => m_denominator = value; }
+        public uint Numerator { get => m_numerator; set => m_numerator = value; }
+        public double Fps { get => m_fps; set => m_fps = value; }
 
         public Demuxer(Stream s)
         {
@@ -157,17 +165,17 @@ namespace sage.vp6
             ushort height = m_reader.ReadUInt16();
             uint framecount = m_reader.ReadUInt32();
             uint largestFrame = m_reader.ReadUInt32();
-            uint denominator = m_reader.ReadUInt32();
-            uint numerator = m_reader.ReadUInt32();
-            double fps = (double)denominator / numerator;
+            Denominator = m_reader.ReadUInt32();
+            Numerator = m_reader.ReadUInt32();
+            Fps = (double)Denominator / Numerator;
 
             switch (type)
             {
                 case StreamType.VIDEO:
-                    Video = new Context(width, height, denominator, numerator, framecount, true,StreamType.VIDEO);
+                    Video = new Context(width, height, Denominator, Numerator, framecount, true,StreamType.VIDEO);
                     break;
                 case StreamType.ALPHA:
-                    m_alpha = new Context(width, height, denominator, numerator, framecount, true, StreamType.ALPHA);
+                    m_alpha = new Context(width, height, Denominator, Numerator, framecount, true, StreamType.ALPHA);
                     break;
             }
         }

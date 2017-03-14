@@ -5,7 +5,7 @@ using System.Text;
 namespace sage.vp6
 {
     //INVERSE DISCRETE COSINE TRANSFORM
-    #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
+#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
     class IDCT
     {
         private const int IdctAdjustBeforeShift = 8;
@@ -22,14 +22,14 @@ namespace sage.vp6
             return (a * b) >> 16;
         }
 
-        public void Put(byte[] dest,int blockOffset,uint stride,short[] input,int type)
+        public void Put(byte[] dest, int blockOffset, int stride, short[] input, int type)
         {
             int A, B, C, D, E, F, G, H;
             int Ad, Bd, Cd, Dd, Ed, Fd, Gd, Hd;
             int Add, Bdd;
 
             //INVERSE DCT ON ROWS
-            for (int row=0; row < 8;++row)
+            for (int row = 0; row < 8; ++row)
             {
                 ref short x0 = ref input[row + 0 * 8];
                 ref short x1 = ref input[row + 1 * 8];
@@ -41,7 +41,7 @@ namespace sage.vp6
                 ref short x7 = ref input[row + 7 * 8];
 
                 //Check non zero values             
-                if ((x0 | x1 | x2 | x3 | x4 | x5 | x6 | x7)!=0)               
+                if ((x0 | x1 | x2 | x3 | x4 | x5 | x6 | x7) != 0)
                 {
                     A = M(xC1S7, x1) + M(xC7S1, x7);
                     B = M(xC7S1, x1) - M(xC1S7, x7);
@@ -94,14 +94,14 @@ namespace sage.vp6
                 short x6 = input[col * 8 + 6];
                 short x7 = input[col * 8 + 7];
 
-                ref byte d0 = ref dest[col + 0 * stride];
-                ref byte d1 = ref dest[col + 1 * stride];
-                ref byte d2 = ref dest[col + 2 * stride];
-                ref byte d3 = ref dest[col + 3 * stride];
-                ref byte d4 = ref dest[col + 4 * stride];
-                ref byte d5 = ref dest[col + 5 * stride];
-                ref byte d6 = ref dest[col + 6 * stride];
-                ref byte d7 = ref dest[col + 7 * stride];
+                ref byte d0 = ref dest[blockOffset + col + 0 * stride];
+                ref byte d1 = ref dest[blockOffset + col + 1 * stride];
+                ref byte d2 = ref dest[blockOffset + col + 2 * stride];
+                ref byte d3 = ref dest[blockOffset + col + 3 * stride];
+                ref byte d4 = ref dest[blockOffset + col + 4 * stride];
+                ref byte d5 = ref dest[blockOffset + col + 5 * stride];
+                ref byte d6 = ref dest[blockOffset + col + 6 * stride];
+                ref byte d7 = ref dest[blockOffset + col + 7 * stride];
 
                 //Check non zero values
                 if ((x1 | x2 | x3 | x4 | x5 | x6 | x7) != 0)
@@ -137,7 +137,7 @@ namespace sage.vp6
 
                     Fd = F - Ad;
                     Hd = Bd + H;
-                    if(type==1)
+                    if (type == 1)
                     {
                         d0 = Util.ClipByte((Gd + Cd) >> 4);
                         d7 = Util.ClipByte((Gd - Cd) >> 4);
@@ -175,7 +175,7 @@ namespace sage.vp6
                     }
                     else
                     {
-                        if (x0>0)
+                        if (x0 > 0)
                         {
                             int v = (xC4S4 * x0 + (IdctAdjustBeforeShift << 16)) >> 20;
                             d0 = Util.ClipByte(d0 + v);
@@ -192,5 +192,5 @@ namespace sage.vp6
             }
         }
     }
-    #pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
+#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
 }

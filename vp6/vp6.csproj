@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
     <PackageId>Sage.vp6</PackageId>
-    <PackageVersion>1.0.1</PackageVersion>
+    <PackageVersion>1.0.3</PackageVersion>
     <Authors>Stephan Vedder</Authors>
     <Description>Library for loading .vp6 video files</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
