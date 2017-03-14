@@ -249,10 +249,10 @@ namespace sage.vp6
                 //calculate the pixeloffset for each block
                 c.BlockOffset[c.Frbi] = (int)((mb_row_flip * 16 + mb_offset)* c.YStride);
                 c.BlockOffset[c.Srbi] = (int)(c.BlockOffset[c.Frbi] + 8*c.YStride);    
-                c.BlockOffset[1]=  c.BlockOffset[0] + 8;             //LOWER LEFT
-                c.BlockOffset[3] = c.BlockOffset[2] + 8;                                //LOWER RIGHT
-                c.BlockOffset[4] = (int)((mb_row_flip * 8 +mb_offset)* c.UvStride);                 //OFFSET IN U PLANE
-                c.BlockOffset[5] = c.BlockOffset[4];                                    //OFFSET IN V PLANE
+                c.BlockOffset[1]=  c.BlockOffset[0] + 8;
+                c.BlockOffset[3] = c.BlockOffset[2] + 8;
+                c.BlockOffset[4] = (int)((mb_row_flip * 8 +mb_offset)* c.UvStride);
+                c.BlockOffset[5] = c.BlockOffset[4];
 
                 for(int column=0;column<c.MbWidth;++column)
                 {

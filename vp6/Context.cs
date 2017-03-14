@@ -201,7 +201,7 @@ namespace sage.vp6
                     cg = Data.CoeffGroups[coeff_index];
                     model1 = model2 = Util.GetSlice(Model.CoeffRact,pt,ct,cg);
                 }
-                LeftBlocks[Data.B6To4[b]].NotNullDc = AboveBlocks[AboveBlocksIdx[b]].NotNullDc = Convert.ToByte(!!Convert.ToBoolean(BlockCoeff[b,0]>0));
+                LeftBlocks[Data.B6To4[b]].NotNullDc = AboveBlocks[AboveBlocksIdx[b]].NotNullDc = Convert.ToByte(BlockCoeff[b,0]!=0);
             }
         }
 
