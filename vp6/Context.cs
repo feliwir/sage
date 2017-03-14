@@ -16,6 +16,7 @@ namespace sage.vp6
         private uint m_numerator;
         private uint m_framecount;
         private StreamType m_type;
+        private int m_flip;
 
         //REQUIRED FOR DECODING 
         private Frame[] m_frames;
@@ -37,6 +38,8 @@ namespace sage.vp6
         private short[,] m_blockCoeff;
         private IDCT m_idct;
         private int[] m_blockOffset;
+        private int m_frbi;
+        private int m_srbi;
 
         //REQUIRED for prediction
         private short[,] m_prevDc;
@@ -47,7 +50,7 @@ namespace sage.vp6
         private uint m_uvSize;
 
         public Context(uint width, uint height, uint denominator, uint numerator,
-            uint framecount, StreamType type)
+            uint framecount, bool flip,StreamType type)
         {
             Width = width;
             Height = height;
@@ -65,6 +68,19 @@ namespace sage.vp6
             BlockCoeff = new short[6, 64];
             BlockOffset = new int[6];
             Idct = new IDCT();
+
+            if (flip)
+            {
+                Flip = -1;
+                Frbi = 2;
+                Srbi = 0;
+            }
+            else
+            {
+                Flip = 1;
+                Frbi = 0;
+                Srbi = 2;
+            }
         }
 
         /// <summary>
@@ -73,7 +89,7 @@ namespace sage.vp6
         /// <returns>Is a packet required</returns>
         public bool RequirePacket()
         {
-            return true;
+            return m_frames[FrameSelect.CURRENT]==null;
         }
 
         public void ProcessPacket(BinaryReader br, int packet_size)
@@ -185,8 +201,13 @@ namespace sage.vp6
                     cg = Data.CoeffGroups[coeff_index];
                     model1 = model2 = Util.GetSlice(Model.CoeffRact,pt,ct,cg);
                 }
-                LeftBlocks[Data.B6To4[b]].NotNullDc = AboveBlocks[AboveBlocksIdx[b]].NotNullDc = Convert.ToByte(BlockCoeff[b,0]>0);
+                LeftBlocks[Data.B6To4[b]].NotNullDc = AboveBlocks[AboveBlocksIdx[b]].NotNullDc = Convert.ToByte(!!Convert.ToBoolean(BlockCoeff[b,0]>0));
             }
+        }
+
+        internal Frame GetFrame()
+        {
+            return Frames[FrameSelect.CURRENT];
         }
 
         public void AddPredictorsDc(int ref_frame,int dequant_dc)
@@ -257,5 +278,8 @@ namespace sage.vp6
         internal Motionvector[] Mvs { get => m_mvs; set => m_mvs = value; }
         internal IDCT Idct { get => m_idct; set => m_idct = value; }
         public int[] BlockOffset { get => m_blockOffset; set => m_blockOffset = value; }
+        public int Flip { get => m_flip; set => m_flip = value; }
+        public int Frbi { get => m_frbi; set => m_frbi = value; }
+        public int Srbi { get => m_srbi; set => m_srbi = value; }
     }
 }

@@ -30,7 +30,7 @@ namespace sage
             //Play all vp6 videos
             Console.WriteLine("Loading all videos...");            
             Demuxer vid = new Demuxer(File.Open("F:/Development/Repositories/sage/test/test.vp6", FileMode.Open,FileAccess.Read,FileShare.Read));
-
+            var buf = vid.GetBufferRGB();
 
         }
     }

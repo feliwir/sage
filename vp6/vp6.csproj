@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
+    <PackageId>Sage.vp6</PackageId>
+    <PackageVersion>1.0.1</PackageVersion>
+    <Authors>Stephan Vedder</Authors>
+    <Description>Library for loading .vp6 video files</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>First release</PackageReleaseNotes>
+    <Copyright>Copyright 2017 (c) Stephan Vedder. All rights reserved.</Copyright>
+    <PackageTags>vp6 video stream flash</PackageTags>
     <RootNamespace>sage.vp6</RootNamespace>
   </PropertyGroup>
 

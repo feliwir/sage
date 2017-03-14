@@ -27,7 +27,7 @@ namespace sage.vp6
         public const int GOLDEN     = 2;
     }
 
-    class Frame
+    internal class Frame
     {     
         //Intra or Interframe
         private FrameType m_type;
@@ -164,7 +164,7 @@ namespace sage.vp6
             {
                 if (m_useHuffman)
                 {
-
+                    throw new NotImplementedException("Not implemented huffman yet!");
                 }
                 else
                 {
@@ -176,16 +176,19 @@ namespace sage.vp6
                 c.CoeffDec = c.RangeDec;
             }
 
-            Planes = new List<byte[]>() { new byte[c.Width*c.Height],
-                                            new byte[c.Width*c.Height],
-                                            new byte[c.Width*c.Height]};
+            Planes = new List<byte[]>() { new byte[c.YSize],
+                                            new byte[c.UvSize],
+                                            new byte[c.UvSize]};
         
             
         }
 
         public void Decode(Context c)
         {
-            if(m_type==FrameType.INTRA)
+            int mb_row_flip = -1;
+            int mb_offset = 0;
+
+            if (m_type==FrameType.INTRA)
             {
                 c.Model.Default();
                 //All macroblocks are intra frames
@@ -218,10 +221,18 @@ namespace sage.vp6
             c.AboveBlocks[2 * c.MbWidth + 2].RefFrame = FrameSelect.CURRENT;
             c.AboveBlocks[3 * c.MbWidth + 4].RefFrame = FrameSelect.CURRENT;
 
+            if (c.Flip < 0)
+                mb_offset = 7;
+
             //The loop for decoding each Macroblock
             for(int row=0;row<c.MbHeight;++row)
             {
-                for(int block=0;block<4;++block)
+                if (c.Flip<0)
+                    mb_row_flip = (int)c.MbHeight - row - 1;
+                else
+                    mb_row_flip = row;
+
+                for (int block=0;block<4;++block)
                 {
                     c.LeftBlocks[block].RefFrame = FrameSelect.NONE;
                     c.LeftBlocks[block].DcCoeff = 0;
@@ -236,12 +247,12 @@ namespace sage.vp6
                 c.AboveBlocksIdx[5] = 3 * (int)c.MbWidth + 4 + 1;
 
                 //calculate the pixeloffset for each block
-                c.BlockOffset[0] = (int)(row * c.YStride * 16);             //UPPER LEFT
-                c.BlockOffset[1] = c.BlockOffset[0] + 8;                    //UPPER RIGHT
-                c.BlockOffset[2] = (int)(c.BlockOffset[0] + 8 * c.YStride); //LOWER LEFT
-                c.BlockOffset[3] = c.BlockOffset[2] + 8;                    //LOWER RIGHT
-                c.BlockOffset[4] = (int)(row * 8 * c.UvStride);             //OFFSET IN U PLANE
-                c.BlockOffset[5] = c.BlockOffset[4];                        //OFFSET IN V PLANE
+                c.BlockOffset[c.Frbi] = (int)((mb_row_flip * 16 + mb_offset)* c.YStride);
+                c.BlockOffset[c.Srbi] = (int)(c.BlockOffset[c.Frbi] + 8*c.YStride);    
+                c.BlockOffset[1]=  c.BlockOffset[0] + 8;             //LOWER LEFT
+                c.BlockOffset[3] = c.BlockOffset[2] + 8;                                //LOWER RIGHT
+                c.BlockOffset[4] = (int)((mb_row_flip * 8 +mb_offset)* c.UvStride);                 //OFFSET IN U PLANE
+                c.BlockOffset[5] = c.BlockOffset[4];                                    //OFFSET IN V PLANE
 
                 for(int column=0;column<c.MbWidth;++column)
                 {
@@ -526,7 +537,7 @@ namespace sage.vp6
             
             if(m_useHuffman)
             {
-                //throw new NotImplementedException("Huffman missing");
+                throw new NotImplementedException("Huffman missing");
             }
             else
             {

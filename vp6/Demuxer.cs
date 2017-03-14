@@ -43,6 +43,14 @@ namespace sage.vp6
             Init();
         }
 
+        public byte[] GetBufferRGB()
+        {
+            return PixelFormat.Yuv420pToRGB(m_video.GetFrame().Planes[0],
+                                            m_video.GetFrame().Planes[1],
+                                            m_video.GetFrame().Planes[2],
+                                            m_video.Width,m_video.Height);
+        }
+
         private void Init()
         {
             m_stream.Seek(0, SeekOrigin.Begin);
@@ -54,7 +62,7 @@ namespace sage.vp6
 
             m_reader = new BinaryReader(m_stream);
             CheckProbe();
-            
+
             ProcessHeader();
             //Read first packets
             ReadPacket();
@@ -78,9 +86,9 @@ namespace sage.vp6
             if (headersize < 8)
                 throw new InvalidDataException("Invalid Headersize for VP6 Video!");
 
-            if (m_fourcc==AVP6_TAG)
+            if (m_fourcc == AVP6_TAG)
             {
-                while (m_alpha==null || m_video == null)
+                while (m_alpha == null || m_video == null)
                 {
                     long startpos = m_stream.Position;
                     int fourcc = m_reader.ReadInt32();
@@ -101,21 +109,21 @@ namespace sage.vp6
                     m_stream.Seek(startpos + blocksize, SeekOrigin.Begin);
                 }
             }
-            else if(m_fourcc == MVhd_TAG)
+            else if (m_fourcc == MVhd_TAG)
             {
                 ProcessVideoHeader(StreamType.VIDEO);
-            }                
+            }
         }
 
-        private void ReadPacket()
+        public void ReadPacket()
         {
             bool read = !(m_reader.BaseStream.Position == m_reader.BaseStream.Length);
-            while(read)
+            while (read)
             {
                 int chunk_type = m_reader.ReadInt32();
                 int chunk_size = m_reader.ReadInt32();
 
-                if(chunk_size<8)
+                if (chunk_size < 8)
                     throw new InvalidDataException("A packet must be atleast 8 bytes long!");
 
                 //Pass packet to the video stream
@@ -124,7 +132,7 @@ namespace sage.vp6
                     Video.ProcessPacket(m_reader, chunk_size);
                 }
                 //Pass packet to the alpha stream
-                else if(chunk_type == AV0K_TAG || chunk_type == AV0F_TAG)
+                else if (chunk_type == AV0K_TAG || chunk_type == AV0F_TAG)
                 {
                     m_alpha.ProcessPacket(m_reader, chunk_size);
                 }
@@ -136,13 +144,15 @@ namespace sage.vp6
 
                 if (m_reader.BaseStream.Position == m_reader.BaseStream.Length)
                     read = false;
+
+                read = m_video.RequirePacket();
             }
         }
 
         private void ProcessVideoHeader(StreamType type)
         {
             CheckCodec();
-            
+
             ushort width = m_reader.ReadUInt16();
             ushort height = m_reader.ReadUInt16();
             uint framecount = m_reader.ReadUInt32();
@@ -154,10 +164,10 @@ namespace sage.vp6
             switch (type)
             {
                 case StreamType.VIDEO:
-                    Video = new Context(width, height, denominator, numerator, framecount,StreamType.VIDEO);
+                    Video = new Context(width, height, denominator, numerator, framecount, true,StreamType.VIDEO);
                     break;
                 case StreamType.ALPHA:
-                    m_alpha = new Context(width, height, denominator, numerator, framecount, StreamType.ALPHA);
+                    m_alpha = new Context(width, height, denominator, numerator, framecount, true, StreamType.ALPHA);
                     break;
             }
         }
@@ -165,7 +175,7 @@ namespace sage.vp6
         private void CheckProbe()
         {
             int fourcc = m_reader.ReadInt32();
-            if (!(fourcc == AVP6_TAG||
+            if (!(fourcc == AVP6_TAG ||
                   fourcc == MVhd_TAG))
 
             {
@@ -179,7 +189,7 @@ namespace sage.vp6
         private void CheckCodec()
         {
             int fourcc = m_reader.ReadInt32();
-            if (!(fourcc == vp60_TAG||
+            if (!(fourcc == vp60_TAG ||
                   fourcc == vp61_TAG))
             {
                 byte[] buf = BitConverter.GetBytes(fourcc);
