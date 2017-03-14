@@ -221,8 +221,8 @@ namespace sage.vp6
 
             for(int b=0;b<6;++b)
             {
-                Reference ab = AboveBlocks[AboveBlocksIdx[b]];
-                Reference lb = LeftBlocks[Data.B6To4[b]];
+                ref Reference ab = ref AboveBlocks[AboveBlocksIdx[b]];
+                ref Reference lb = ref LeftBlocks[Data.B6To4[b]];
 
                 int count = 0, dc=0;
 

@@ -59,7 +59,7 @@ namespace sage.vp6
         private bool m_useHuffman;
 
         private delegate void ParseCoeff(int dequant_ac);
-        private ParseCoeff m_parseCoeff;     
+        private ParseCoeff del_parseCoeff;     
 
         private List<byte[]> m_planes;
         private List<int> m_strides;
@@ -164,13 +164,13 @@ namespace sage.vp6
 
             m_useHuffman = Convert.ToBoolean(c.RangeDec.ReadBit());
 
-            m_parseCoeff = c.ParseCoefficients;
+            del_parseCoeff = c.ParseCoefficients;
 
             if (m_coeffOffset>0)
             {
                 if (m_useHuffman)
                 {
-                    m_parseCoeff = c.ParseCoefficientsHuffman;
+                    del_parseCoeff = c.ParseCoefficientsHuffman;
                 }
                 else
                 {
@@ -187,7 +187,7 @@ namespace sage.vp6
                                             new byte[c.UvSize]};
 
 
-            Strides = new List<int> { -(int)c.YStride, -(int)c.UvStride, -(int)c.UvStride };
+            Strides = new List<int> { c.Flip*(int)c.YStride, c.Flip * (int)c.UvStride, c.Flip * (int)c.UvStride };
 
         }
 
@@ -294,7 +294,7 @@ namespace sage.vp6
                 mode = DecodeMotionvector(c, row, column);
             }
 
-            m_parseCoeff(m_dequant_ac);
+            del_parseCoeff(m_dequant_ac);
 
             //TODO: work here
             RenderMacroblock(c, mode);
@@ -325,6 +325,7 @@ namespace sage.vp6
                     }
                     break;
                 default:
+                    throw new NotImplementedException("This macroblock type is not supported!");
                     break;
             }
 
