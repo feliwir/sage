@@ -321,7 +321,8 @@ namespace sage.vp6
                     {
                         short[] slice = Util.GetSlice(c.BlockCoeff, b);
                         plane = Data.B2p[b];
-                        c.Idct.Put(Planes[plane], c.BlockOffset[b],Strides[plane],slice,1);
+                        c.Idct.Put(Planes[plane], c.BlockOffset[b],Strides[plane],slice);
+                        Util.ClearSlice(c.BlockCoeff, b);
                     }
                     break;
                 default:

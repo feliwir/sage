@@ -65,6 +65,17 @@ namespace sage.vp6
             return sub;
         }
 
+
+        public static void ClearSlice<T>(T[,] arr, int x)
+        {
+            int size = arr.GetLength(1);
+
+            for (int i = 0; i < size; ++i)
+            {
+                arr[x, i] = default(T);
+            }
+        }
+
         public static byte[] Transpose(byte[] arr)
         {
             byte[] result = new byte[arr.Length];

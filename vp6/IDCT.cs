@@ -22,7 +22,12 @@ namespace sage.vp6
             return (a * b) >> 16;
         }
 
-        public void Put(byte[] dest, int blockOffset, int stride, short[] input, int type)
+        public void Put(byte[] dest, int blockOffset, int stride, short[] input)
+        {
+            Calculate(dest, blockOffset, stride, input, 1);
+        }
+
+        public void Calculate(byte[] dest, int blockOffset, int stride, short[] input, int type)
         {
             int A, B, C, D, E, F, G, H;
             int Ad, Bd, Cd, Dd, Ed, Fd, Gd, Hd;
