@@ -24,6 +24,10 @@ namespace sage.vp6
         private Model m_model;
         private RangeDecoder m_rangeDec;
         private RangeDecoder m_coeffDec;
+        private BitReader m_bitReader;
+        private Huffman m_huffDccv;
+        private Huffman m_huffRunv;
+        private Huffman m_huffRact;
         private Profile m_profile;
         private bool m_useLoopFiltering;
         private bool m_loopFilterSelector;
@@ -286,5 +290,9 @@ namespace sage.vp6
         public int Flip { get => m_flip; set => m_flip = value; }
         public int Frbi { get => m_frbi; set => m_frbi = value; }
         public int Srbi { get => m_srbi; set => m_srbi = value; }
+        internal BitReader BitReader { get => m_bitReader; set => m_bitReader = value; }
+        internal Huffman HuffDccv { get => m_huffDccv; set => m_huffDccv = value; }
+        internal Huffman HuffRunv { get => m_huffRunv; set => m_huffRunv = value; }
+        internal Huffman HuffRact { get => m_huffRact; set => m_huffRact = value; }
     }
 }

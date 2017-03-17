@@ -171,6 +171,7 @@ namespace sage.vp6
                 if (m_useHuffman)
                 {
                     del_parseCoeff = c.ParseCoefficientsHuffman;
+                    c.BitReader = new BitReader(buf, index);
                 }
                 else
                 {
@@ -178,7 +179,7 @@ namespace sage.vp6
                 }
             }
             else
-            {
+            {              
                 c.CoeffDec = c.RangeDec;
             }
 
@@ -547,7 +548,21 @@ namespace sage.vp6
             
             if(m_useHuffman)
             {
-                throw new NotImplementedException("Huffman missing");
+                for (int pt = 0; pt < 2; pt++)
+                {
+                    byte[] dccv = Util.GetSlice(c.Model.CoeffDccv, pt);
+                    c.HuffDccv = new Huffman(dccv, Data.HuffCoeffMap,12);
+
+                    byte[] runv = Util.GetSlice(c.Model.CoeffRunv, pt);
+                    c.HuffRunv = new Huffman(runv, Data.HuffRunMap,9);
+
+                    for (int ct = 0; ct < 3; ct++)
+                        for (int cg = 0; cg < 6; cg++)
+                        {
+                            byte[] ract = Util.GetSlice(c.Model.CoeffRact, pt, ct, cg);
+                            c.HuffRact = new Huffman(ract, Data.HuffCoeffMap,12);
+                        }
+                }
             }
             else
             {

@@ -202,5 +202,14 @@ namespace sage.vp6
             new Tree( 2, 8), new Tree(CodingMode.USING_GOLDEN,true), new Tree(CodingMode.GOLDEN_MV,true),
             new Tree( 2, 9), new Tree(CodingMode.GOLD_NEAREST_MV,true), new Tree(CodingMode.GOLD_NEAR_MV,true),
         };
+
+        internal static readonly byte[] HuffCoeffMap = new byte[] {
+            13, 14, 11, 0, 1, 15, 16, 18, 2, 17, 3, 4, 19, 20, 5, 6, 21, 22, 7, 8, 9, 10
+        };
+
+        internal static readonly byte[] HuffRunMap = new byte[] {
+            10, 13, 11, 12, 0, 1, 2, 3, 14, 8, 15, 16, 4, 5, 6, 7
+        };
+
     }
 }
