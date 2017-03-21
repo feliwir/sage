@@ -551,16 +551,16 @@ namespace sage.vp6
                 for (int pt = 0; pt < 2; pt++)
                 {
                     byte[] dccv = Util.GetSlice(c.Model.CoeffDccv, pt);
-                    c.HuffDccv = new Huffman(dccv, Data.HuffCoeffMap,12);
+                    c.HuffDccv[pt] = new Huffman(dccv, Data.HuffCoeffMap,12);
 
                     byte[] runv = Util.GetSlice(c.Model.CoeffRunv, pt);
-                    c.HuffRunv = new Huffman(runv, Data.HuffRunMap,9);
+                    c.HuffRunv[pt] = new Huffman(runv, Data.HuffRunMap,9);
 
                     for (int ct = 0; ct < 3; ct++)
                         for (int cg = 0; cg < 6; cg++)
                         {
                             byte[] ract = Util.GetSlice(c.Model.CoeffRact, pt, ct, cg);
-                            c.HuffRact = new Huffman(ract, Data.HuffCoeffMap,12);
+                            c.HuffRact[pt,ct,cg] = new Huffman(ract, Data.HuffCoeffMap,12);
                         }
                 }
             }
